@@ -1,5 +1,7 @@
 /*****************************************************************************/
 /**  Martín Quesada Zaragoza                                                **/
+/**  Nahuel Unai Roselló Beneitez                                           **/
+/**  Manuel Roselló Oviedo                                                  **/
 /*****************************************************************************/
 %{
 #include <stdio.h>
@@ -7,10 +9,18 @@
 #include "header.h"
 %}
 
+%union {
+    char *id;
+    int cte;
+}
+
 %token STRUCT_ INT_ BOOL_ READ_ PRINT_ WHILE_ FOR_ IF_ ELSE_ TRUE_ FALSE_
 %token SEP_ SEMICOL_ MAS_ MENOS_ NOT_ POR_ DIV_ MOD_ MASMAS_ MENOSMENOS_ 
 %token APAR_ CPAR_ ACOR_ CCOR_ ALLAV_ CLLAV_ ASIG_ MASASIG_ MENOSASIG_ PORASIG_ DIVASIG_ ASIGASIG_ NOTASIG_ AND_ OR_ MAYOR_ MENOR_ MAYORASIG_ MENORASIG_
-%token ID_ CTE_ 
+%token <id> ID_
+%token <cte> CTE_
+
+%type <cte> expresion
 
 %%
 
@@ -23,12 +33,22 @@ sentencia               : declaracion
                         | instruccion
                         ;
 declaracion             : tipoSimple ID_ SEMICOL_
+                            { 
+                                $$.tipo = $1.tipo;
+                                
+                            }
                         | tipoSimple ID_ ASIG_ constante SEMICOL_
                         | tipoSimple ID_ ACOR_ CTE_ CCOR_ SEMICOL_
                         | STRUCT_ ALLAV_ listaCampos CLLAV_ ID_ SEMICOL_
                         ;
 tipoSimple              : INT_
+                            {
+                                $$.tipo = T_ENTERO;
+                            }
                         | BOOL_
+                            {
+                                $$.tipo = T_LOGICO;
+                            }
                         ;
 listaCampos             : tipoSimple ID_ SEMICOL_
                         | listaCampos tipoSimple ID_ SEMICOL_
