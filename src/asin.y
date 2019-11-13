@@ -7,11 +7,13 @@
 #include <stdio.h>
 #include <string.h>
 #include "header.h"
+#include "libtds.h"
 %}
 
 %union {
     char *id;
     int cte;
+    int tipo;
 }
 
 %token STRUCT_ INT_ BOOL_ READ_ PRINT_ WHILE_ FOR_ IF_ ELSE_ TRUE_ FALSE_
@@ -21,10 +23,12 @@
 %token <cte> CTE_
 
 %type <cte> expresion
+%type <tipo> declaracion tipoSimple
+%type <CTESTRUCT> constante
 
 %%
 
-programa                : ALLAV_ secuenciaSentencias CLLAV_
+programa                : ALLAV_ { dvar = 0; } secuenciaSentencias CLLAV_ { verTdS(); }
                         ;
 secuenciaSentencias     : sentencia
                         | secuenciaSentencias sentencia
@@ -33,21 +37,46 @@ sentencia               : declaracion
                         | instruccion
                         ;
 declaracion             : tipoSimple ID_ SEMICOL_
-                            { 
-                                $$.tipo = $1.tipo;
-                                
+                            {
+                                $$ = T_ERROR;
+
+                                SIMB sim = obtTdS($2);
+                                if (sim.tipo != T_ERROR) {
+                                    yyerror("Objeto ya declarado");
+                                }
+                                else {
+                                    insTdS($2, $1, dvar, -1);
+                                    dvar += TALLA_TIPO_SIMPLE;
+                                    $$ = $1;
+                                }
                             }
                         | tipoSimple ID_ ASIG_ constante SEMICOL_
+                            {
+                                $$ = T_ERROR;
+
+                                SIMB sim = obtTdS($2);
+                                if (sim.tipo != T_ERROR) {
+                                    yyerror("Objeto ya declarado");
+                                }
+                                else if ($1 != $4.tipo) {
+                                    yyerror("Error de incompatibilidad de tipos.");
+                                }
+                                else {
+                                    insTdS($2, $1, dvar, -1);
+                                    dvar += TALLA_TIPO_SIMPLE;
+                                    $$ = $1;
+                                }
+                            }
                         | tipoSimple ID_ ACOR_ CTE_ CCOR_ SEMICOL_
                         | STRUCT_ ALLAV_ listaCampos CLLAV_ ID_ SEMICOL_
                         ;
 tipoSimple              : INT_
                             {
-                                $$.tipo = T_ENTERO;
+                                $$ = T_ENTERO;
                             }
                         | BOOL_
                             {
-                                $$.tipo = T_LOGICO;
+                                $$ = T_LOGICO;
                             }
                         ;
 listaCampos             : tipoSimple ID_ SEMICOL_
@@ -104,9 +133,9 @@ expresionSufija         : APAR_ expresion CPAR_
                         | ID_ SEP_ ID_
                         | constante
                         ;
-constante               : CTE_
-                        | TRUE_
-                        | FALSE_
+constante               : CTE_ {$$.tipo = T_ENTERO; $$.cte = $1.cte;}
+                        | TRUE_ {$$.tipo = T_LOGICO; $$.cte = TRUE;}
+                        | FALSE_ {$$.tipo = T_LOGICO; $$.cte = FALSE;}
                         ;
 operadorAsignacion      : ASIG_
                         | MASASIG_

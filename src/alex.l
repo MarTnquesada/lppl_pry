@@ -76,7 +76,7 @@ cte            {entero}|{real}
 ">="           { retornar(MAYORASIG_); }
 "<="           { retornar(MENORASIG_); }
 {cte}          { yylval.cte = atoi(yytext); retornar(CTE_);       }
-{id}           { yylval.id = yytext; retornar(ID_);        }
+{id}           { yylval.id = strdup(yytext); retornar(ID_);        }
 .	             { yyerror("Caracter desconocido"); }
 %%
 /*****************************************************************************/
