@@ -51,7 +51,7 @@ declaracion             : tipoSimple ID_ SEMICOL_
                             {
                                 SIMB sim = obtTdS($2);
                                 if (sim.tipo != T_ERROR) {
-                                    yyerror("Objeto ya declarado");
+                                    yyerror("Objeto ya declarado.");
                                 }
                                 else if ($1 != $4.tipo) {
                                     yyerror("Error de incompatibilidad de tipos.");
@@ -62,7 +62,34 @@ declaracion             : tipoSimple ID_ SEMICOL_
                                 }
                             }
                         | tipoSimple ID_ ACOR_ CTE_ CCOR_ SEMICOL_
+                            {
+                                SIMB sim  = obtTdS($2);
+                                if (sim.tipo != T_ERROR) {
+                                    yyerror("Objeto ya declarado.");
+                                }
+                                else if ($4 < 0) {
+                                    yyerror("Definición incorrecta del límite del vector (índice negativo).");
+                                }
+                                else {
+                                    int arrayRef = insTdA($1, $4);
+                                    insTdS($2, T_ARRAY, dvar, arrayRef);
+                                    dvar += TALLA_TIPO_SIMPLE * $4;
+                                }
+                            }
                         | STRUCT_ ALLAV_ listaCampos CLLAV_ ID_ SEMICOL_
+                            {
+                                SIMB sim = obtTdS($5);
+                                if (sim.tipo != T_ERROR) {
+                                    yyerror("Objeto ya declarado.");
+                                }
+                                else {
+                                    // regRef se tendría que propagar desde la
+                                    // primera declaración de los campos del registro
+                                    insTdS($5, T_RECORD, dvar, regRef);
+                                    // Deberíamos crear un atributo "talla"
+                                    dvar += $3.talla;
+                                }
+                            }
                         ;
 tipoSimple              : INT_
                             {
