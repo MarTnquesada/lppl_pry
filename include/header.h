@@ -27,6 +27,7 @@ extern int verTDS;                  /* Flag para saber si se ve la TdS */
 extern int dvar;                    /* Desplazamiento en el segmento de variables */
 
 /*****************************************************************************/
+
 typedef struct cteStruct {
     int tipo;
     int cte;

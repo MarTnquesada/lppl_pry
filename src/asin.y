@@ -14,6 +14,7 @@
     char *id;
     int cte;
     int tipo;
+    CTESTRUCT ctestr;
 }
 
 %token STRUCT_ INT_ BOOL_ READ_ PRINT_ WHILE_ FOR_ IF_ ELSE_ TRUE_ FALSE_
@@ -22,9 +23,8 @@
 %token <id> ID_
 %token <cte> CTE_
 
-%type <cte> expresion
-%type <tipo> declaracion tipoSimple
-%type <CTESTRUCT> constante
+%type <ctestr> expresion constante
+%type <tipo> tipoSimple
 
 %%
 
@@ -38,8 +38,6 @@ sentencia               : declaracion
                         ;
 declaracion             : tipoSimple ID_ SEMICOL_
                             {
-                                $$ = T_ERROR;
-
                                 SIMB sim = obtTdS($2);
                                 if (sim.tipo != T_ERROR) {
                                     yyerror("Objeto ya declarado");
@@ -47,13 +45,10 @@ declaracion             : tipoSimple ID_ SEMICOL_
                                 else {
                                     insTdS($2, $1, dvar, -1);
                                     dvar += TALLA_TIPO_SIMPLE;
-                                    $$ = $1;
                                 }
                             }
                         | tipoSimple ID_ ASIG_ constante SEMICOL_
                             {
-                                $$ = T_ERROR;
-
                                 SIMB sim = obtTdS($2);
                                 if (sim.tipo != T_ERROR) {
                                     yyerror("Objeto ya declarado");
@@ -64,7 +59,6 @@ declaracion             : tipoSimple ID_ SEMICOL_
                                 else {
                                     insTdS($2, $1, dvar, -1);
                                     dvar += TALLA_TIPO_SIMPLE;
-                                    $$ = $1;
                                 }
                             }
                         | tipoSimple ID_ ACOR_ CTE_ CCOR_ SEMICOL_
@@ -133,7 +127,7 @@ expresionSufija         : APAR_ expresion CPAR_
                         | ID_ SEP_ ID_
                         | constante
                         ;
-constante               : CTE_ {$$.tipo = T_ENTERO; $$.cte = $1.cte;}
+constante               : CTE_ {$$.tipo = T_ENTERO; $$.cte = $1;}
                         | TRUE_ {$$.tipo = T_LOGICO; $$.cte = TRUE;}
                         | FALSE_ {$$.tipo = T_LOGICO; $$.cte = FALSE;}
                         ;
