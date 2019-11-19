@@ -117,7 +117,7 @@ listaCampos             : tipoSimple ID_ SEMICOL_
                                 /* No se tiene que comprobar si ya existe en la tabla
                                 de símbolos porque es un campo del registro y no una
                                 variable del programa */
-                                insTdR($$.regRef, $3, $2, $1.talla);
+                                insTdR($1.regRef, $3, $2, $1.talla);
                                 $$.talla += TALLA_TIPO_SIMPLE;
                                 $$.regRef = $1.regRef;
                             }
@@ -176,7 +176,58 @@ expresion               : expresionLogica
                                 }
                             }
                         | ID_ ACOR_ expresion CCOR_ operadorAsignacion expresion
+                            {
+                                // No se puede poner array[-0], peta
+                                $$.tipo = T_ERROR;
+                                SIMB sim = obtTdS($1);
+                                if (sim.tipo == T_ERROR) {
+                                    /* Cambiar string o algo */
+                                    yyerror("$1 no existente.");
+                                }
+                                else {
+                                    DIM arr = obtTdA(sim.ref);
+                                    if (arr.telem == T_ERROR) {
+                                        yyerror("$1 no es un array.");
+                                    }
+                                    else if ($3.tipo != T_ENTERO) {
+                                        yyerror("El índice del vector no es de tipo entero.");
+                                    }
+                                    else if ($3.cte < 0 || $3.cte >= arr.nelem) {
+                                        yyerror("Índice fuera de rango.");
+                                    }
+                                    else if ($6.tipo == T_ERROR) {
+                                        // Ninguna salida por pantalla, ya la hemos hecho donde toca
+                                    }
+                                    else if (arr.telem != $6.tipo) {
+                                        yyerror("Error de incompatibilidad de tipos.");
+                                    }
+                                    else {
+                                        $$.tipo = T_VACIO;
+                                    }
+                                }
+                            }
                         | ID_ SEP_ ID_ operadorAsignacion expresion
+                            {
+                                SIMB sim = obtTdS($1);
+                                if (sim.tipo == T_ERROR) {
+                                    yyerror("$1 no existente.");
+                                }
+                                else {
+                                    CAMP camp = obtTdR(sim.ref, $3);
+                                    if (camp.tipo == T_ERROR) {
+                                        yyerror("$3 no es un campo de $1.");
+                                    }
+                                    else if ($5.tipo == T_ERROR) {
+                                        // Ninguna salida por pantalla, ya la hemos hecho donde toca
+                                    }
+                                    else if (camp.tipo != $5.tipo) {
+                                        yyerror("Error de incompatibilidad de tipos.");
+                                    }
+                                    else {
+                                        $$.tipo = T_VACIO;
+                                    }
+                                }
+                            }
                         ;
 expresionLogica         : expresionIgualdad
                         | expresionLogica operadorLogico expresionIgualdad
@@ -198,8 +249,34 @@ expresionUnaria         : expresionSufija
                         | operadorIncremento ID_
                         ;
 expresionSufija         : APAR_ expresion CPAR_
+                            {
+                                $$.tipo = $2.tipo;
+                            }
                         | ID_ operadorIncremento
+                            {
+                                $$.tipo = T_ERROR;
+                                SIMB sim = obtTdS($1);
+                                if (sim.tipo == T_ERROR) {
+                                    yyerror("$1 no existente.");
+                                }
+                                else if (sim.tipo != T_ENTERO) {
+                                    yyerror("Operación inválida para este tipo.");
+                                }
+                                else {
+                                    $$.tipo = T_VACIO;
+                                }
+                            }
                         | ID_ ACOR_ expresion CCOR_
+                            {
+                                $$.tipo = T_ERROR;
+                                SIMB sim = obtTdS($1);
+                                if (sim.tipo == T_ERROR) {
+                                    yyerror("$1 no existente.");
+                                }
+                                else {
+                                    DIM 
+                                }
+                            }
                         | ID_
                         | ID_ SEP_ ID_
                         | constante

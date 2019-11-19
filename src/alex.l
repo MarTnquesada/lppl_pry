@@ -21,7 +21,7 @@
 
 delimitador    [ \t]+
 digito         [0-9]
-sep            [.] 
+sep            [.]
 minuscula      [a-z]
 mayuscula      [A-Z]
 letra          {minuscula}|{mayuscula}
