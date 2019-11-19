@@ -26,6 +26,7 @@
 
 %type <ctestr> constante
 %type <ctestr> expresion expresionAditiva expresionIgualdad expresionLogica expresionMultipicativa expresionRelacional expresionSufija expresionUnaria
+%type <ctestr> operadorUnario
 %type <tipo> tipoSimple
 %type <lcstr> listaCampos
 
@@ -135,19 +136,21 @@ listaInstrucciones      : instruccion
 instruccionEntradaSalida : READ_ APAR_ ID_ CPAR_ SEMICOL_
                         | PRINT_ APAR_ expresion CPAR_ SEMICOL_
                         ;
-instruccionSeleccion    : IF_ APAR_ expresion CPAR_ instruccion ELSE_ instruccion
+instruccionSeleccion    : IF_ APAR_ expresion CPAR_
                             {
                                 if ($3.tipo != T_LOGICO) {
                                     yyerror("Expresión no válida en la guarda de la condición.");
                                 }
                             }
+                        instruccion ELSE_ instruccion
                         ;
-instruccionIteracion    : WHILE_ APAR_ expresion CPAR_ instruccion
+instruccionIteracion    : WHILE_ APAR_ expresion CPAR_
                             {
                                 if ($3.tipo != T_LOGICO) {
                                     yyerror("Expresión no válida en la guarda de la condición.");
                                 }
                             }
+                        instruccion
                         ;
 instruccionExpresion    : expresion SEMICOL_
                         | SEMICOL_
@@ -177,7 +180,7 @@ expresion               : expresionLogica
                             }
                         | ID_ ACOR_ expresion CCOR_ operadorAsignacion expresion
                             {
-                                // No se puede poner array[-0], peta
+                                // No se puede poner array[-0], peta (!!)
                                 $$.tipo = T_ERROR;
                                 SIMB sim = obtTdS($1);
                                 if (sim.tipo == T_ERROR) {
@@ -277,6 +280,7 @@ expresionRelacional     : expresionAditiva
                             }
                         | expresionRelacional operadorRelacional expresionAditiva
                             {
+                                $$.tipo = T_ERROR;
                                 if ($1.tipo != T_ERROR || $3.tipo != T_ERROR) {
                                     // Ninguna salida por pantalla, ya la hemos hecho donde toca
                                 }
@@ -294,6 +298,7 @@ expresionAditiva        : expresionMultipicativa
                             }
                         | expresionAditiva operadorAditivo expresionMultipicativa
                             {
+                                $$.tipo = T_ERROR;
                                 if ($1.tipo != T_ERROR || $3.tipo != T_ERROR) {
                                     // Ninguna salida por pantalla, ya la hemos hecho donde toca
                                 }
@@ -311,6 +316,7 @@ expresionMultipicativa  : expresionUnaria
                             }
                         | expresionMultipicativa operadorMultiplicativo expresionUnaria
                             {
+                                $$.tipo = T_ERROR;
                                 if ($1.tipo != T_ERROR || $3.tipo != T_ERROR) {
                                     // Ninguna salida por pantalla, ya la hemos hecho donde toca
                                 }
@@ -328,7 +334,13 @@ expresionUnaria         : expresionSufija
                             }
                         | operadorUnario expresionUnaria
                             {
-                                $$.tipo = $2.tipo;
+                                $$.tipo = T_ERROR;
+                                if ($1.tipo != $2.tipo) {
+                                    yyerror("Error en el tipo del operador.");
+                                }
+                                else {
+                                    $$.tipo = $2.tipo;
+                                }
                             }
                         | operadorIncremento ID_
                             {
@@ -454,8 +466,19 @@ operadorMultiplicativo  : POR_
                         | MOD_
                         ;
 operadorUnario          : MAS_
+                            {
+                                // Quizá rentaría para estas tres cosas tener dos tipos de operadores:
+                                // OP_LOGICO y OP_ENTERO
+                                $$.tipo = T_ENTERO;
+                            }
                         | MENOS_
+                            {
+                                $$.tipo = T_ENTERO;
+                            }
                         | NOT_
+                            {
+                                $$.tipo = T_LOGICO;
+                            }
                         ;
 operadorIncremento      : MASMAS_
                         | MENOSMENOS_
