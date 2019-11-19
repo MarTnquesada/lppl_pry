@@ -70,7 +70,7 @@ declaracion             : tipoSimple ID_ SEMICOL_
                                 if (sim.tipo != T_ERROR) {
                                     yyerror("Objeto ya declarado.");
                                 }
-                                else if ($4 < 0) {
+                                else if ($4 <= 0) {
                                     yyerror("Definición incorrecta del límite del vector (índice negativo).");
                                 }
                                 else {
@@ -184,10 +184,13 @@ expresion               : expresionLogica
                                     /* Cambiar string o algo */
                                     yyerror("$1 no existente.");
                                 }
+                                else if (sim.tipo != T_ARRAY) {
+                                    yyerror("$1 no es un array.");
+                                }
                                 else {
                                     DIM arr = obtTdA(sim.ref);
                                     if (arr.telem == T_ERROR) {
-                                        yyerror("$1 no es un array.");
+                                        yyerror("$1 no es un array válido.");
                                     }
                                     else if ($3.tipo != T_ENTERO) {
                                         yyerror("El índice del vector no es de tipo entero.");
@@ -347,10 +350,13 @@ expresionSufija         : APAR_ expresion CPAR_
                                 if (sim.tipo == T_ERROR) {
                                     yyerror("$1 no existente.");
                                 }
+                                else if (sim.tipo != T_ARRAY) {
+                                    yyerror("$1 no es un array.");
+                                }
                                 else {
                                     DIM arr = obtTdA(sim.ref);
                                     if (arr.telem == T_ERROR) {
-                                        yyerror("$1 no es un array.");
+                                        yyerror("$1 no es un array válido.");
                                     }
                                     else if ($3.tipo != T_ENTERO) {
                                         yyerror("El índice del vector no es de tipo entero.");
