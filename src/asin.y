@@ -25,7 +25,7 @@
 %token <cte> CTE_
 
 %type <ctestr> constante
-%type <ctestr> expresion expresionAditiva expresionIgualdad expresionLogica expresionMultipicativa expresionRelacional expresionSufija expresionUnaria
+%type <ctestr> expresion expresionAditiva expresionIgualdad expresionLogica expresionMultiplicativa expresionRelacional expresionSufija expresionUnaria
 %type <ctestr> operadorUnario
 %type <tipo> tipoSimple
 %type <lcstr> listaCampos
@@ -263,6 +263,7 @@ expresionIgualdad       : expresionRelacional
                             }
                         | expresionIgualdad operadorIgualdad expresionRelacional
                             {
+                                $$.tipo = T_ERROR;
                                 if ($1.tipo != T_ERROR || $3.tipo != T_ERROR) {
                                     // Ninguna salida por pantalla, ya la hemos hecho donde toca
                                 }
@@ -292,11 +293,11 @@ expresionRelacional     : expresionAditiva
                                 }
                             }
                         ;
-expresionAditiva        : expresionMultipicativa
+expresionAditiva        : expresionMultiplicativa
                             {
                                 $$.tipo = $1.tipo;
                             }
-                        | expresionAditiva operadorAditivo expresionMultipicativa
+                        | expresionAditiva operadorAditivo expresionMultiplicativa
                             {
                                 $$.tipo = T_ERROR;
                                 if ($1.tipo != T_ERROR || $3.tipo != T_ERROR) {
@@ -310,11 +311,11 @@ expresionAditiva        : expresionMultipicativa
                                 }
                             }
                         ;
-expresionMultipicativa  : expresionUnaria 
+expresionMultiplicativa  : expresionUnaria 
                             {
                                 $$.tipo = $1.tipo;
                             }
-                        | expresionMultipicativa operadorMultiplicativo expresionUnaria
+                        | expresionMultiplicativa operadorMultiplicativo expresionUnaria
                             {
                                 $$.tipo = T_ERROR;
                                 if ($1.tipo != T_ERROR || $3.tipo != T_ERROR) {
