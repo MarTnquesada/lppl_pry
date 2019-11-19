@@ -71,7 +71,7 @@ declaracion             : tipoSimple ID_ SEMICOL_
                                     yyerror("Objeto ya declarado.");
                                 }
                                 else if ($4 <= 0) {
-                                    yyerror("Definición incorrecta del límite del vector (índice negativo).");
+                                    yyerror("Definición incorrecta del límite del vector (índice no válido).");
                                 }
                                 else {
                                     int arrayRef = insTdA($1, $4);
@@ -87,7 +87,7 @@ declaracion             : tipoSimple ID_ SEMICOL_
                                 }
                                 else {
                                     insTdS($5, T_RECORD, dvar, $3.regRef);
-                                    dvar += $3.talla;
+                                    dvar += $3.talla; /* +TALLA_TIPO_SIMPLE??? */
                                 }
                             }
                         ;
