@@ -230,23 +230,97 @@ expresion               : expresionLogica
                             }
                         ;
 expresionLogica         : expresionIgualdad
+                            {
+                                $$.tipo = $1.tipo;
+                            }
                         | expresionLogica operadorLogico expresionIgualdad
+                            {
+                                if ($1.tipo != T_LOGICO || $3.tipo != T_LOGICO) {
+                                    yyerror("Error en el tipo del operador.");
+                                }
+                                else {
+                                    $$.tipo = T_LOGICO;
+                                }
+                            }
                         ;
 expresionIgualdad       : expresionRelacional
+                            {
+                                $$.tipo = $1.tipo;
+                            }
                         | expresionIgualdad operadorIgualdad expresionRelacional
+                            {
+                                if ($1.tipo != $3.tipo || $1.tipo == T_ERROR || $3.tipo == T_ERROR) {
+                                    yyerror("Error en el tipo del operador.");
+                                }
+                                else {
+                                    $$.tipo = T_LOGICO;
+                                }
+                            }
                         ;
 expresionRelacional     : expresionAditiva
+                            {
+                                $$.tipo = $1.tipo;
+                            }
                         | expresionRelacional operadorRelacional expresionAditiva
+                            {
+                                if ($1.tipo != T_ENTERO || $3.tipo != T_ENTERO) {
+                                    yyerror("Error en el tipo del operador.");
+                                }
+                                else {
+                                    $$.tipo = T_LOGICO;
+                                }
+                            }
                         ;
 expresionAditiva        : expresionMultipicativa
+                            {
+                                $$.tipo = $1.tipo;
+                            }
                         | expresionAditiva operadorAditivo expresionMultipicativa
+                            {
+                                if ($1.tipo != T_ENTERO || $3.tipo != T_ENTERO) {
+                                    yyerror("Error en el tipo del operador.");
+                                }
+                                else {
+                                    $$.tipo = T_ENTERO;
+                                }
+                            }
                         ;
 expresionMultipicativa  : expresionUnaria 
+                            {
+                                $$.tipo = $1.tipo;
+                            }
                         | expresionMultipicativa operadorMultiplicativo expresionUnaria
+                            {
+                                if ($1.tipo != T_ENTERO || $3.tipo != T_ENTERO) {
+                                    yyerror("Error en el tipo del operador.");
+                                }
+                                else {
+                                    $$.tipo = T_ENTERO;
+                                }
+                            }
                         ;
 expresionUnaria         : expresionSufija
+                            {
+                                $$.tipo = $1.tipo;
+                            }
                         | operadorUnario expresionUnaria
+                            {
+                                $$.tipo = $2.tipo;
+                            }
                         | operadorIncremento ID_
+                            {
+                                $$.tipo = T_ERROR;
+                                SIMB sim = obtTdS($2);
+                                if (sim.tipo == T_ERROR) {
+                                    yyerror("$2 no existente.");
+                                }
+                                else if (sim.tipo != T_ENTERO) {
+                                    yyerror("Operación inválida para este tipo.");
+                                }
+                                else {
+                                    $$.tipo = T_ENTERO;
+                                }
+                            }
                         ;
 expresionSufija         : APAR_ expresion CPAR_
                             {
@@ -263,7 +337,7 @@ expresionSufija         : APAR_ expresion CPAR_
                                     yyerror("Operación inválida para este tipo.");
                                 }
                                 else {
-                                    $$.tipo = T_VACIO;
+                                    $$.tipo = T_ENTERO;
                                 }
                             }
                         | ID_ ACOR_ expresion CCOR_
@@ -274,12 +348,52 @@ expresionSufija         : APAR_ expresion CPAR_
                                     yyerror("$1 no existente.");
                                 }
                                 else {
-                                    DIM 
+                                    DIM arr = obtTdA(sim.ref);
+                                    if (arr.telem == T_ERROR) {
+                                        yyerror("$1 no es un array.");
+                                    }
+                                    else if ($3.tipo != T_ENTERO) {
+                                        yyerror("El índice del vector no es de tipo entero.");
+                                    }
+                                    else if ($3.cte < 0 || $3.cte >= arr.nelem) {
+                                        yyerror("Índice fuera de rango.");
+                                    }
+                                    else {
+                                        $$.tipo = arr.telem;
+                                    }
                                 }
                             }
                         | ID_
+                            {
+                                $$.tipo = T_ERROR;
+                                SIMB sim = obtTdS($1);
+                                if (sim.tipo == T_ERROR) {
+                                    yyerror("$1 no existente.");
+                                }
+                                else {
+                                    $$.tipo = sim.tipo;
+                                }
+                            }
                         | ID_ SEP_ ID_
+                            {
+                                SIMB sim = obtTdS($1);
+                                if (sim.tipo == T_ERROR) {
+                                    yyerror("$1 no existente.");
+                                }
+                                else {
+                                    CAMP camp = obtTdR(sim.ref, $3);
+                                    if (camp.tipo == T_ERROR) {
+                                        yyerror("$3 no es un campo de $1.");
+                                    }
+                                    else {
+                                        $$.tipo = camp.tipo;
+                                    }
+                                }
+                            }
                         | constante
+                            {
+                                $$.tipo = $1.tipo;
+                            }
                         ;
 constante               : CTE_ {$$.tipo = T_ENTERO; $$.cte = $1;}
                         | TRUE_ {$$.tipo = T_LOGICO; $$.cte = TRUE;}
