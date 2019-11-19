@@ -32,6 +32,10 @@ typedef struct cteStruct {
     int tipo;
     int cte;
 } CTESTRUCT;
+typedef struct lcStruct{
+    int talla;
+    int regRef;
+} LCSTRUCT;
 /*****************************************************************************/
 #endif  /* _HEADER_H */
 /*****************************************************************************/

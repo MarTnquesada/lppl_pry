@@ -14,6 +14,7 @@
     char *id;
     int cte;
     int tipo;
+    LCSTRUCT lcstr;
     CTESTRUCT ctestr;
 }
 
@@ -23,8 +24,10 @@
 %token <id> ID_
 %token <cte> CTE_
 
-%type <ctestr> expresion constante
+%type <ctestr> constante
+%type <ctestr> expresion expresionAditiva expresionIgualdad expresionLogica expresionMultipicativa expresionRelacional expresionSufija expresionUnaria
 %type <tipo> tipoSimple
+%type <lcstr> listaCampos
 
 %%
 
@@ -63,7 +66,7 @@ declaracion             : tipoSimple ID_ SEMICOL_
                             }
                         | tipoSimple ID_ ACOR_ CTE_ CCOR_ SEMICOL_
                             {
-                                SIMB sim  = obtTdS($2);
+                                SIMB sim = obtTdS($2);
                                 if (sim.tipo != T_ERROR) {
                                     yyerror("Objeto ya declarado.");
                                 }
@@ -83,10 +86,7 @@ declaracion             : tipoSimple ID_ SEMICOL_
                                     yyerror("Objeto ya declarado.");
                                 }
                                 else {
-                                    // regRef se tendría que propagar desde la
-                                    // primera declaración de los campos del registro
-                                    insTdS($5, T_RECORD, dvar, regRef);
-                                    // Deberíamos crear un atributo "talla"
+                                    insTdS($5, T_RECORD, dvar, $3.regRef);
                                     dvar += $3.talla;
                                 }
                             }
@@ -101,7 +101,26 @@ tipoSimple              : INT_
                             }
                         ;
 listaCampos             : tipoSimple ID_ SEMICOL_
+                            {
+                                int regRef = insTdR(-1, $2, $1, 0);
+                                $$.talla = TALLA_TIPO_SIMPLE;
+                                $$.regRef = regRef;
+                            }
                         | listaCampos tipoSimple ID_ SEMICOL_
+                            {
+                                CAMP sim = obtTdR($1.regRef, $3);
+                                if (sim.tipo != T_ERROR) {
+                                    /* cambiar a que mole más */
+                                    /* char bla[] = "lkasjfkladsjfkl" */
+                                    yyerror("Campo $3 duplicado");
+                                }
+                                /* No se tiene que comprobar si ya existe en la tabla
+                                de símbolos porque es un campo del registro y no una
+                                variable del programa */
+                                insTdR($$.regRef, $3, $2, $1.talla);
+                                $$.talla += TALLA_TIPO_SIMPLE;
+                                $$.regRef = $1.regRef;
+                            }
                         ;
 instruccion             : ALLAV_ CLLAV_
                         | ALLAV_ listaInstrucciones CLLAV_
@@ -117,14 +136,45 @@ instruccionEntradaSalida : READ_ APAR_ ID_ CPAR_ SEMICOL_
                         | PRINT_ APAR_ expresion CPAR_ SEMICOL_
                         ;
 instruccionSeleccion    : IF_ APAR_ expresion CPAR_ instruccion ELSE_ instruccion
+                            {
+                                if ($3.tipo != T_LOGICO) {
+                                    yyerror("Expresión no válida en la guarda de la condición.");
+                                }
+                            }
                         ;
 instruccionIteracion    : WHILE_ APAR_ expresion CPAR_ instruccion
+                            {
+                                if ($3.tipo != T_LOGICO) {
+                                    yyerror("Expresión no válida en la guarda de la condición.");
+                                }
+                            }
                         ;
 instruccionExpresion    : expresion SEMICOL_
                         | SEMICOL_
                         ;
 expresion               : expresionLogica
+                            {
+                                $$.tipo = $1.tipo;
+                                /* $$.cte = $1.cte; */
+                            }
                         | ID_ operadorAsignacion expresion
+                            {
+                                $$.tipo = T_ERROR;
+                                SIMB sim = obtTdS($1);
+                                if (sim.tipo == T_ERROR) {
+                                    /* Cambiar string o algo */
+                                    yyerror("$1 no existente.");
+                                }
+                                else if ($3.tipo == T_ERROR) {
+                                    // Ninguna salida por pantalla, ya la hemos hecho
+                                }
+                                else if (sim.tipo != $3.tipo) {
+                                    yyerror("Error de incompatibilidad de tipos.");
+                                }
+                                else {
+                                    $$.tipo = T_VACIO;
+                                }
+                            }
                         | ID_ ACOR_ expresion CCOR_ operadorAsignacion expresion
                         | ID_ SEP_ ID_ operadorAsignacion expresion
                         ;
