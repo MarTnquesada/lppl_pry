@@ -21,9 +21,9 @@ extern char *yytext;                         /* Patron detectado             */
 extern void yyerror(const char * msg) ;   /* Tratamiento de errores          */
 
 extern int verbosidad;                   /* Flag si se desea una traza       */
+extern int verTDS;                        /* Flag para saber si se ve la TdS */
 extern int numErrores;              /* Contador del numero de errores        */
 
-extern int verTDS;                  /* Flag para saber si se ve la TdS */
 extern int dvar;                    /* Desplazamiento en el segmento de variables */
 
 /*****************************************************************************/

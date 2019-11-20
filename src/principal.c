@@ -7,6 +7,7 @@
 #include "asin.h"
 
 int verbosidad = FALSE;                  /* Flag si se desea una traza       */
+int verTDS = FALSE;        /* Flag si se desea ver la tabla de símbolos      */
 int numErrores = 0;                 /* Contador del numero de errores        */
 /*****************************************************************************/
 void yyerror(const char * msg)
@@ -22,6 +23,7 @@ int main (int argc, char **argv)
 
   for (i=1; i<argc; ++i) { 
     if (strcmp(argv[i], "-v")==0) { verbosidad = TRUE; n++; }
+    if (strcmp(argv[i], "-t")==0) { verTDS = TRUE; n++; }
   }
   if (argc == n+1) {
     if ((yyin = fopen (argv[n], "r")) == NULL) {

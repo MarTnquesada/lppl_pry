@@ -32,7 +32,7 @@
 
 %%
 
-programa                : ALLAV_ { dvar = 0; } secuenciaSentencias CLLAV_ { verTdS(); }
+programa                : ALLAV_ { dvar = 0; } secuenciaSentencias CLLAV_ { if (verTDS) { verTdS(); } }
                         ;
 secuenciaSentencias     : sentencia
                         | secuenciaSentencias sentencia
@@ -44,7 +44,7 @@ declaracion             : tipoSimple ID_ SEMICOL_
                             {
                                 SIMB sim = obtTdS($2);
                                 if (sim.tipo != T_ERROR) {
-                                    yyerror("Objeto ya declarado");
+                                    yyerror("Variable ya declarada");
                                 }
                                 else {
                                     insTdS($2, $1, dvar, -1);
@@ -55,7 +55,7 @@ declaracion             : tipoSimple ID_ SEMICOL_
                             {
                                 SIMB sim = obtTdS($2);
                                 if (sim.tipo != T_ERROR) {
-                                    yyerror("Objeto ya declarado.");
+                                    yyerror("Variable ya declarada.");
                                 }
                                 else if ($1 != $4.tipo) {
                                     yyerror("Error de incompatibilidad de tipos.");
@@ -69,7 +69,7 @@ declaracion             : tipoSimple ID_ SEMICOL_
                             {
                                 SIMB sim = obtTdS($2);
                                 if (sim.tipo != T_ERROR) {
-                                    yyerror("Objeto ya declarado.");
+                                    yyerror("Variable ya declarada.");
                                 }
                                 else if ($4 <= 0) {
                                     yyerror("Definición incorrecta del límite del vector (índice no válido).");
@@ -77,18 +77,18 @@ declaracion             : tipoSimple ID_ SEMICOL_
                                 else {
                                     int arrayRef = insTdA($1, $4);
                                     insTdS($2, T_ARRAY, dvar, arrayRef);
-                                    dvar += TALLA_TIPO_SIMPLE * $4; // + TALLA_TIPO_SIMPLE(???)
+                                    dvar += TALLA_TIPO_SIMPLE * $4;
                                 }
                             }
                         | STRUCT_ ALLAV_ listaCampos CLLAV_ ID_ SEMICOL_
                             {
                                 SIMB sim = obtTdS($5);
                                 if (sim.tipo != T_ERROR) {
-                                    yyerror("Objeto ya declarado.");
+                                    yyerror("Variable ya declarada.");
                                 }
                                 else {
                                     insTdS($5, T_RECORD, dvar, $3.regRef);
-                                    dvar += $3.talla; /* +TALLA_TIPO_SIMPLE??? */
+                                    dvar += $3.talla;
                                 }
                             }
                         ;
@@ -134,11 +134,31 @@ listaInstrucciones      : instruccion
                         | listaInstrucciones instruccion
                         ;
 instruccionEntradaSalida : READ_ APAR_ ID_ CPAR_ SEMICOL_
+                            {
+                                SIMB sim = obtTdS($3);
+                                if (sim.tipo == T_ERROR) {
+                                    yyerror("$1 no existente.");
+                                }
+                                else if (sim.tipo != T_ENTERO) {
+                                    yyerror("$1 no es de tipo entero.");
+                                }
+                            }
                         | PRINT_ APAR_ expresion CPAR_ SEMICOL_
+                            {
+                                if ($3.tipo == T_ERROR) {
+                                    // Ninguna salida por pantalla, ya la hemos hecho
+                                }
+                                else if ($3.tipo != T_ENTERO) {
+                                    yyerror("$3 no es de tipo entero.");
+                                }
+                            }
                         ;
 instruccionSeleccion    : IF_ APAR_ expresion CPAR_
                             {
-                                if ($3.tipo != T_LOGICO) {
+                                if ($3.tipo == T_ERROR) {
+                                    // Ninguna salida por pantalla, ya la hemos hecho
+                                }
+                                else if ($3.tipo != T_LOGICO) {
                                     yyerror("Expresión no válida en la guarda de la condición.");
                                 }
                             }
@@ -146,8 +166,11 @@ instruccionSeleccion    : IF_ APAR_ expresion CPAR_
                         ;
 instruccionIteracion    : WHILE_ APAR_ expresion CPAR_
                             {
-                                if ($3.tipo != T_LOGICO) {
-                                    yyerror("Expresión no válida en la guarda de la condición.");
+                                if ($3.tipo == T_ERROR) {
+                                    // Ninguna salida por pantalla, ya la hemos hecho
+                                }
+                                else if ($3.tipo != T_LOGICO) {
+                                    yyerror("Expresión no válida en la guarda del bucle.");
                                 }
                             }
                         instruccion
@@ -220,7 +243,7 @@ expresion               : expresionLogica
                                     yyerror("$1 no existente.");
                                 }
                                 else if (sim.tipo != T_RECORD) {
-                                    yyerror("$1 no es un registro.");
+                                    yyerror("$1 no es de tipo 'struct'.");
                                 }
                                 else {
                                     CAMP camp = obtTdR(sim.ref, $3);
@@ -246,11 +269,11 @@ expresionLogica         : expresionIgualdad
                         | expresionLogica operadorLogico expresionIgualdad
                             {
                                 $$.tipo = T_ERROR;
-                                if ($1.tipo != T_ERROR || $3.tipo != T_ERROR) {
+                                if ($1.tipo == T_ERROR || $3.tipo == T_ERROR) {
                                     // Ninguna salida por pantalla, ya la hemos hecho donde toca
                                 }
                                 else if ($1.tipo != T_LOGICO || $3.tipo != T_LOGICO) {
-                                    yyerror("Error en el tipo del operador.");
+                                    yyerror("Error en el tipo de un operando.");
                                 }
                                 else {
                                     $$.tipo = T_LOGICO;
@@ -264,11 +287,11 @@ expresionIgualdad       : expresionRelacional
                         | expresionIgualdad operadorIgualdad expresionRelacional
                             {
                                 $$.tipo = T_ERROR;
-                                if ($1.tipo != T_ERROR || $3.tipo != T_ERROR) {
+                                if ($1.tipo == T_ERROR || $3.tipo == T_ERROR) {
                                     // Ninguna salida por pantalla, ya la hemos hecho donde toca
                                 }
                                 else if ($1.tipo != $3.tipo) {
-                                    yyerror("Error en el tipo del operador.");
+                                    yyerror("Error en el tipo de un operando.");
                                 }
                                 else {
                                     $$.tipo = T_LOGICO;
@@ -282,11 +305,11 @@ expresionRelacional     : expresionAditiva
                         | expresionRelacional operadorRelacional expresionAditiva
                             {
                                 $$.tipo = T_ERROR;
-                                if ($1.tipo != T_ERROR || $3.tipo != T_ERROR) {
+                                if ($1.tipo == T_ERROR || $3.tipo == T_ERROR) {
                                     // Ninguna salida por pantalla, ya la hemos hecho donde toca
                                 }
                                 else if ($1.tipo != T_ENTERO || $3.tipo != T_ENTERO) {
-                                    yyerror("Error en el tipo del operador.");
+                                    yyerror("Error en el tipo de un operando.");
                                 }
                                 else {
                                     $$.tipo = T_LOGICO;
@@ -300,11 +323,11 @@ expresionAditiva        : expresionMultiplicativa
                         | expresionAditiva operadorAditivo expresionMultiplicativa
                             {
                                 $$.tipo = T_ERROR;
-                                if ($1.tipo != T_ERROR || $3.tipo != T_ERROR) {
+                                if ($1.tipo == T_ERROR || $3.tipo == T_ERROR) {
                                     // Ninguna salida por pantalla, ya la hemos hecho donde toca
                                 }
                                 else if ($1.tipo != T_ENTERO || $3.tipo != T_ENTERO) {
-                                    yyerror("Error en el tipo del operador.");
+                                    yyerror("Error en el tipo de un operando.");
                                 }
                                 else {
                                     $$.tipo = T_ENTERO;
@@ -318,11 +341,11 @@ expresionMultiplicativa  : expresionUnaria
                         | expresionMultiplicativa operadorMultiplicativo expresionUnaria
                             {
                                 $$.tipo = T_ERROR;
-                                if ($1.tipo != T_ERROR || $3.tipo != T_ERROR) {
+                                if ($1.tipo == T_ERROR || $3.tipo == T_ERROR) {
                                     // Ninguna salida por pantalla, ya la hemos hecho donde toca
                                 }
                                 else if ($1.tipo != T_ENTERO || $3.tipo != T_ENTERO) {
-                                    yyerror("Error en el tipo del operador.");
+                                    yyerror("Error en el tipo de un operando.");
                                 }
                                 else {
                                     $$.tipo = T_ENTERO;
@@ -337,7 +360,7 @@ expresionUnaria         : expresionSufija
                             {
                                 $$.tipo = T_ERROR;
                                 if ($1.tipo != $2.tipo) {
-                                    yyerror("Error en el tipo del operador.");
+                                    yyerror("Error en el tipo de un operando.");
                                 }
                                 else {
                                     $$.tipo = $2.tipo;
@@ -421,7 +444,7 @@ expresionSufija         : APAR_ expresion CPAR_
                                     yyerror("$1 no existente.");
                                 }
                                 else if (sim.tipo != T_RECORD) {
-                                    yyerror("$1 no es un registro.");
+                                    yyerror("$1 no es de tipo 'struct'.");
                                 }
                                 else {
                                     CAMP camp = obtTdR(sim.ref, $3);
