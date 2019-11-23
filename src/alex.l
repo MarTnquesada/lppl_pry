@@ -1,7 +1,8 @@
 /*****************************************************************************/
-/**  Martín Quesada Zaragoza                                                **/
-/**  Nahuel Unai Roselló Beneitez                                           **/
-/**  Manuel Roselló Oviedo                                                  **/
+/**  GRUPO 12:                                                              **/                                                                            
+/**  Martin Quesada Zaragoza                                                **/
+/**  Nahuel Unai Rosello Beneitez                                           **/
+/**  Manuel Rosello Oviedo                                                  **/                                      
 /*****************************************************************************/
 %{
 #include <stdio.h>
@@ -16,7 +17,7 @@
   numero de linea actual en la variable global "yylineno".
 -----------------------------------------------------------------------------*/
 %option noinput       
-%option nounput       
+%option nounput 
 %option yylineno  
 
 delimitador    [ \t]+

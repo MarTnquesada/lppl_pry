@@ -1,5 +1,9 @@
 /*****************************************************************************/
 /*  Programa principal y tratamiento de errores para MenosC.20               */
+/**  GRUPO 12:                                                              **/                                                                            
+/**  Martin Quesada Zaragoza                                                **/
+/**  Nahuel Unai Rosello Beneitez                                           **/
+/**  Manuel Rosello Oviedo                                                  **/                                       
 /*****************************************************************************/
 #include <stdio.h>
 #include <string.h>

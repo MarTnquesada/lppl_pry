@@ -1,7 +1,8 @@
 /*****************************************************************************/
-/**  Martín Quesada Zaragoza                                                **/
-/**  Nahuel Unai Roselló Beneitez                                           **/
-/**  Manuel Roselló Oviedo                                                  **/
+/**  GRUPO 12:                                                              **/                                                                            
+/**  Martin Quesada Zaragoza                                                **/
+/**  Nahuel Unai Rosello Beneitez                                           **/
+/**  Manuel Rosello Oviedo                                                  **/                                    
 /*****************************************************************************/
 %{
 #include <stdio.h>
@@ -20,12 +21,15 @@
 
 %token STRUCT_ INT_ BOOL_ READ_ PRINT_ WHILE_ FOR_ IF_ ELSE_ TRUE_ FALSE_
 %token SEP_ SEMICOL_ MAS_ MENOS_ NOT_ POR_ DIV_ MOD_ MASMAS_ MENOSMENOS_ 
-%token APAR_ CPAR_ ACOR_ CCOR_ ALLAV_ CLLAV_ ASIG_ MASASIG_ MENOSASIG_ PORASIG_ DIVASIG_ ASIGASIG_ NOTASIG_ AND_ OR_ MAYOR_ MENOR_ MAYORASIG_ MENORASIG_
+%token APAR_ CPAR_ ACOR_ CCOR_ ALLAV_ CLLAV_ AND_ OR_
+%token ASIG_ MASASIG_ MENOSASIG_ PORASIG_ DIVASIG_
+%token ASIGASIG_ NOTASIG_ MAYOR_ MENOR_ MAYORASIG_ MENORASIG_
 %token <id> ID_
 %token <cte> CTE_
 
 %type <ctestr> constante
-%type <ctestr> expresion expresionAditiva expresionIgualdad expresionLogica expresionMultiplicativa expresionRelacional expresionSufija expresionUnaria
+%type <ctestr> expresion expresionAditiva expresionIgualdad expresionLogica 
+%type <ctestr> expresionMultiplicativa expresionRelacional expresionSufija expresionUnaria
 %type <ctestr> operadorUnario
 %type <tipo> tipoSimple
 %type <lcstr> listaCampos
@@ -44,7 +48,7 @@ declaracion             : tipoSimple ID_ SEMICOL_
                             {
                                 SIMB sim = obtTdS($2);
                                 if (sim.tipo != T_ERROR) {
-                                    yyerror("Variable ya declarada");
+                                    yyerror("Error en la declaracion de la variable: variable ya declarada.");
                                 }
                                 else {
                                     insTdS($2, $1, dvar, -1);
@@ -55,10 +59,10 @@ declaracion             : tipoSimple ID_ SEMICOL_
                             {
                                 SIMB sim = obtTdS($2);
                                 if (sim.tipo != T_ERROR) {
-                                    yyerror("Variable ya declarada.");
+                                    yyerror("Error en la declaracion de la variable: variable ya declarada.");
                                 }
                                 else if ($1 != $4.tipo) {
-                                    yyerror("Error de incompatibilidad de tipos.");
+                                    yyerror("Error en la declaracion de la variable: error de incompatibilidad de tipos.");
                                 }
                                 else {
                                     insTdS($2, $1, dvar, -1);
@@ -69,10 +73,10 @@ declaracion             : tipoSimple ID_ SEMICOL_
                             {
                                 SIMB sim = obtTdS($2);
                                 if (sim.tipo != T_ERROR) {
-                                    yyerror("Variable ya declarada.");
+                                    yyerror("Error en la declaracion del vector: vector ya declarado.");
                                 }
                                 else if ($4 <= 0) {
-                                    yyerror("Definición incorrecta del límite del vector (índice no válido).");
+                                    yyerror("Error en la declaracion del vector: talla inapropiada.");
                                 }
                                 else {
                                     int arrayRef = insTdA($1, $4);
@@ -84,7 +88,7 @@ declaracion             : tipoSimple ID_ SEMICOL_
                             {
                                 SIMB sim = obtTdS($5);
                                 if (sim.tipo != T_ERROR) {
-                                    yyerror("Variable ya declarada.");
+                                    yyerror("Error en la declaracion de la estructura: estructura ya declarada.");
                                 }
                                 else {
                                     insTdS($5, T_RECORD, dvar, $3.regRef);
@@ -111,12 +115,10 @@ listaCampos             : tipoSimple ID_ SEMICOL_
                             {
                                 CAMP sim = obtTdR($1.regRef, $3);
                                 if (sim.tipo != T_ERROR) {
-                                    /* cambiar a que mole más */
-                                    /* char bla[] = "lkasjfkladsjfkl" */
-                                    yyerror("Campo $3 duplicado");
+                                    yyerror("Error en la declaracion de la estructura: campo duplicado");
                                 }
                                 /* No se tiene que comprobar si ya existe en la tabla
-                                de símbolos porque es un campo del registro y no una
+                                de simbolos, porque es un campo del registro y no una
                                 variable del programa */
                                 insTdR($1.regRef, $3, $2, $1.talla);
                                 $$.talla += TALLA_TIPO_SIMPLE;
@@ -137,29 +139,29 @@ instruccionEntradaSalida : READ_ APAR_ ID_ CPAR_ SEMICOL_
                             {
                                 SIMB sim = obtTdS($3);
                                 if (sim.tipo == T_ERROR) {
-                                    yyerror("$1 no existente.");
+                                    yyerror("Error en la instruccion de lectura: variable no declarada.");
                                 }
                                 else if (sim.tipo != T_ENTERO) {
-                                    yyerror("$1 no es de tipo entero.");
+                                    yyerror("Error en la instruccion de lectura: la variable no es de tipo entero.");
                                 }
                             }
                         | PRINT_ APAR_ expresion CPAR_ SEMICOL_
                             {
                                 if ($3.tipo == T_ERROR) {
-                                    // Ninguna salida por pantalla, ya la hemos hecho
+                                    // Ninguna salida por pantalla, ya la hemos hecho donde toca
                                 }
                                 else if ($3.tipo != T_ENTERO) {
-                                    yyerror("$3 no es de tipo entero.");
+                                    yyerror("Error en la instruccion de escritura: la variable no es de tipo entero.");
                                 }
                             }
                         ;
 instruccionSeleccion    : IF_ APAR_ expresion CPAR_
                             {
                                 if ($3.tipo == T_ERROR) {
-                                    // Ninguna salida por pantalla, ya la hemos hecho
+                                    // Ninguna salida por pantalla, ya la hemos hecho donde toca
                                 }
                                 else if ($3.tipo != T_LOGICO) {
-                                    yyerror("Expresión no válida en la guarda de la condición.");
+                                    yyerror("Error en la expresion condicional: expresion no valida en la guarda.");
                                 }
                             }
                         instruccion ELSE_ instruccion
@@ -167,10 +169,10 @@ instruccionSeleccion    : IF_ APAR_ expresion CPAR_
 instruccionIteracion    : WHILE_ APAR_ expresion CPAR_
                             {
                                 if ($3.tipo == T_ERROR) {
-                                    // Ninguna salida por pantalla, ya la hemos hecho
+                                    // Ninguna salida por pantalla, ya la hemos hecho donde toca
                                 }
                                 else if ($3.tipo != T_LOGICO) {
-                                    yyerror("Expresión no válida en la guarda del bucle.");
+                                    yyerror("Error en la expresion de bucle: expresion no valida en la guarda.");
                                 }
                             }
                         instruccion
@@ -188,14 +190,13 @@ expresion               : expresionLogica
                                 $$.tipo = T_ERROR;
                                 SIMB sim = obtTdS($1);
                                 if (sim.tipo == T_ERROR) {
-                                    /* Cambiar string o algo */
-                                    yyerror("$1 no existente.");
+                                    yyerror("Error en la asignacion: variable no declarada.");
                                 }
                                 else if ($3.tipo == T_ERROR) {
-                                    // Ninguna salida por pantalla, ya la hemos hecho
+                                    // Ninguna salida por pantalla, ya la hemos hecho donde toca
                                 }
                                 else if (sim.tipo != $3.tipo) {
-                                    yyerror("Error de incompatibilidad de tipos.");
+                                    yyerror("Error en la asignacion: error de incompatibilidad de tipos.");
                                 }
                                 else {
                                     $$.tipo = T_VACIO;
@@ -203,32 +204,27 @@ expresion               : expresionLogica
                             }
                         | ID_ ACOR_ expresion CCOR_ operadorAsignacion expresion
                             {
-                                // No se puede poner array[-0], peta (!!)
                                 $$.tipo = T_ERROR;
                                 SIMB sim = obtTdS($1);
                                 if (sim.tipo == T_ERROR) {
-                                    /* Cambiar string o algo */
-                                    yyerror("$1 no existente.");
+                                    yyerror("Error en la asignacion: vector no declarado.");
                                 }
                                 else if (sim.tipo != T_ARRAY) {
-                                    yyerror("$1 no es un array.");
+                                    yyerror("Error en la asignacion: la variable no ha sido declarada como un vector.");
                                 }
                                 else {
                                     DIM arr = obtTdA(sim.ref);
                                     if (arr.telem == T_ERROR) {
-                                        yyerror("$1 no es un array válido.");
+                                        yyerror("Error en la asignacion: la variable no es un vector valido.");
                                     }
                                     else if ($3.tipo != T_ENTERO) {
-                                        yyerror("El índice del vector no es de tipo entero.");
-                                    }
-                                    else if ($3.cte < 0 || $3.cte >= arr.nelem) {
-                                        yyerror("Índice fuera de rango.");
+                                        yyerror("Error en la asignacion: el indice del vector no es de tipo entero.");
                                     }
                                     else if ($6.tipo == T_ERROR) {
                                         // Ninguna salida por pantalla, ya la hemos hecho donde toca
                                     }
                                     else if (arr.telem != $6.tipo) {
-                                        yyerror("Error de incompatibilidad de tipos.");
+                                        yyerror("Error en la asignacion: error de incompatibilidad de tipos.");
                                     }
                                     else {
                                         $$.tipo = T_VACIO;
@@ -240,21 +236,21 @@ expresion               : expresionLogica
                                 $$.tipo = T_ERROR;
                                 SIMB sim = obtTdS($1);
                                 if (sim.tipo == T_ERROR) {
-                                    yyerror("$1 no existente.");
+                                    yyerror("Error en la asignacion: estructura no declarada.");
                                 }
                                 else if (sim.tipo != T_RECORD) {
-                                    yyerror("$1 no es de tipo 'struct'.");
+                                    yyerror("Error en la asignacion: la variable no es de tipo 'struct'.");
                                 }
                                 else {
                                     CAMP camp = obtTdR(sim.ref, $3);
                                     if (camp.tipo == T_ERROR) {
-                                        yyerror("$3 no es un campo de $1.");
+                                        yyerror("Error en la asignacion: el campo referenciado no es un campo de la estructura.");
                                     }
                                     else if ($5.tipo == T_ERROR) {
                                         // Ninguna salida por pantalla, ya la hemos hecho donde toca
                                     }
                                     else if (camp.tipo != $5.tipo) {
-                                        yyerror("Error de incompatibilidad de tipos.");
+                                        yyerror("Error en la asignacion: error de incompatibilidad de tipos.");
                                     }
                                     else {
                                         $$.tipo = T_VACIO;
@@ -272,8 +268,11 @@ expresionLogica         : expresionIgualdad
                                 if ($1.tipo == T_ERROR || $3.tipo == T_ERROR) {
                                     // Ninguna salida por pantalla, ya la hemos hecho donde toca
                                 }
-                                else if ($1.tipo != T_LOGICO || $3.tipo != T_LOGICO) {
-                                    yyerror("Error en el tipo de un operando.");
+                                else if ($1.tipo != T_LOGICO) {
+                                    yyerror("Error en la expresion logica: el primer operando no es de tipo logico.");
+                                }
+                                else if ($3.tipo != T_LOGICO) {
+                                   yyerror("Error en la expresion logica: el segundo operando no es de tipo logico."); 
                                 }
                                 else {
                                     $$.tipo = T_LOGICO;
@@ -291,7 +290,7 @@ expresionIgualdad       : expresionRelacional
                                     // Ninguna salida por pantalla, ya la hemos hecho donde toca
                                 }
                                 else if ($1.tipo != $3.tipo) {
-                                    yyerror("Error en el tipo de un operando.");
+                                    yyerror("Error en la expresion de igualdad: error de incompatibilidad de tipos.");
                                 }
                                 else {
                                     $$.tipo = T_LOGICO;
@@ -308,8 +307,11 @@ expresionRelacional     : expresionAditiva
                                 if ($1.tipo == T_ERROR || $3.tipo == T_ERROR) {
                                     // Ninguna salida por pantalla, ya la hemos hecho donde toca
                                 }
-                                else if ($1.tipo != T_ENTERO || $3.tipo != T_ENTERO) {
-                                    yyerror("Error en el tipo de un operando.");
+                                else if ($1.tipo != T_ENTERO) {
+                                    yyerror("Error en la expresion relacional: el primer operando no es de tipo entero.");
+                                }
+                                else if ($3.tipo != T_ENTERO) {
+                                   yyerror("Error en la expresion relacional: el segundo operando no es de tipo entero."); 
                                 }
                                 else {
                                     $$.tipo = T_LOGICO;
@@ -326,8 +328,11 @@ expresionAditiva        : expresionMultiplicativa
                                 if ($1.tipo == T_ERROR || $3.tipo == T_ERROR) {
                                     // Ninguna salida por pantalla, ya la hemos hecho donde toca
                                 }
-                                else if ($1.tipo != T_ENTERO || $3.tipo != T_ENTERO) {
-                                    yyerror("Error en el tipo de un operando.");
+                                else if ($1.tipo != T_ENTERO) {
+                                    yyerror("Error en la expresion aditiva: el primer operando no es de tipo entero.");
+                                }
+                                else if ($3.tipo != T_ENTERO) {
+                                   yyerror("Error en la expresion aditiva: el segundo operando no es de tipo entero."); 
                                 }
                                 else {
                                     $$.tipo = T_ENTERO;
@@ -344,8 +349,11 @@ expresionMultiplicativa  : expresionUnaria
                                 if ($1.tipo == T_ERROR || $3.tipo == T_ERROR) {
                                     // Ninguna salida por pantalla, ya la hemos hecho donde toca
                                 }
-                                else if ($1.tipo != T_ENTERO || $3.tipo != T_ENTERO) {
-                                    yyerror("Error en el tipo de un operando.");
+                                else if ($1.tipo != T_ENTERO) {
+                                    yyerror("Error en la expresion multiplicativa: el primer operando no es de tipo entero.");
+                                }
+                                else if ($3.tipo != T_ENTERO) {
+                                   yyerror("Error en la expresion multiplicativa: el segundo operando no es de tipo entero."); 
                                 }
                                 else {
                                     $$.tipo = T_ENTERO;
@@ -360,7 +368,7 @@ expresionUnaria         : expresionSufija
                             {
                                 $$.tipo = T_ERROR;
                                 if ($1.tipo != $2.tipo) {
-                                    yyerror("Error en el tipo de un operando.");
+                                    yyerror("Error en la expresion unaria: error de incompatibilidad de tipos.");
                                 }
                                 else {
                                     $$.tipo = $2.tipo;
@@ -371,10 +379,10 @@ expresionUnaria         : expresionSufija
                                 $$.tipo = T_ERROR;
                                 SIMB sim = obtTdS($2);
                                 if (sim.tipo == T_ERROR) {
-                                    yyerror("$2 no existente.");
+                                    yyerror("Error en la expresion unaria: variable no declarada.");
                                 }
                                 else if (sim.tipo != T_ENTERO) {
-                                    yyerror("Operación inválida para este tipo.");
+                                    yyerror("Error en la expresion unaria: operacion invalida para este tipo.");
                                 }
                                 else {
                                     $$.tipo = T_ENTERO;
@@ -390,10 +398,10 @@ expresionSufija         : APAR_ expresion CPAR_
                                 $$.tipo = T_ERROR;
                                 SIMB sim = obtTdS($1);
                                 if (sim.tipo == T_ERROR) {
-                                    yyerror("$1 no existente.");
+                                    yyerror("Error en la expresion sufija: variable no declarada.");
                                 }
                                 else if (sim.tipo != T_ENTERO) {
-                                    yyerror("Operación inválida para este tipo.");
+                                    yyerror("Error en la expresion sufija: operacion invalida para este tipo.");
                                 }
                                 else {
                                     $$.tipo = T_ENTERO;
@@ -404,21 +412,18 @@ expresionSufija         : APAR_ expresion CPAR_
                                 $$.tipo = T_ERROR;
                                 SIMB sim = obtTdS($1);
                                 if (sim.tipo == T_ERROR) {
-                                    yyerror("$1 no existente.");
+                                    yyerror("Error en la expresion sufija: vector no declarado.");
                                 }
                                 else if (sim.tipo != T_ARRAY) {
-                                    yyerror("$1 no es un array.");
+                                    yyerror("Error en la expresion sufija: la variable no es un vector.");
                                 }
                                 else {
                                     DIM arr = obtTdA(sim.ref);
                                     if (arr.telem == T_ERROR) {
-                                        yyerror("$1 no es un array válido.");
+                                        yyerror("Error en la expresion sufija: el vector referenciado no es un vector valido.");
                                     }
                                     else if ($3.tipo != T_ENTERO) {
-                                        yyerror("El índice del vector no es de tipo entero.");
-                                    }
-                                    else if ($3.cte < 0 || $3.cte >= arr.nelem) {
-                                        yyerror("Índice fuera de rango.");
+                                        yyerror("Error en la expresion sufija: el indice del vector no es de tipo entero.");
                                     }
                                     else {
                                         $$.tipo = arr.telem;
@@ -430,7 +435,7 @@ expresionSufija         : APAR_ expresion CPAR_
                                 $$.tipo = T_ERROR;
                                 SIMB sim = obtTdS($1);
                                 if (sim.tipo == T_ERROR) {
-                                    yyerror("$1 no existente.");
+                                    yyerror("Error en la expresion sufija: variable no declarada.");
                                 }
                                 else {
                                     $$.tipo = sim.tipo;
@@ -441,15 +446,15 @@ expresionSufija         : APAR_ expresion CPAR_
                                 $$.tipo = T_ERROR;
                                 SIMB sim = obtTdS($1);
                                 if (sim.tipo == T_ERROR) {
-                                    yyerror("$1 no existente.");
+                                    yyerror("Error en la expresion sufija: estructura no declarada.");
                                 }
                                 else if (sim.tipo != T_RECORD) {
-                                    yyerror("$1 no es de tipo 'struct'.");
+                                    yyerror("Error en la expresion sufija: la variable no es de tipo 'struct'.");
                                 }
                                 else {
                                     CAMP camp = obtTdR(sim.ref, $3);
                                     if (camp.tipo == T_ERROR) {
-                                        yyerror("$3 no es un campo de $1.");
+                                        yyerror("Error en la expresion sufija: el campo referenciado no es un campo de la estructura.");
                                     }
                                     else {
                                         $$.tipo = camp.tipo;
@@ -491,8 +496,6 @@ operadorMultiplicativo  : POR_
                         ;
 operadorUnario          : MAS_
                             {
-                                // Quizá rentaría para estas tres cosas tener dos tipos de operadores:
-                                // OP_LOGICO y OP_ENTERO
                                 $$.tipo = T_ENTERO;
                             }
                         | MENOS_
