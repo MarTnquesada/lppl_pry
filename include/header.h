@@ -1,7 +1,8 @@
 /*****************************************************************************/
-/**   Ejemplo de un posible fichero de cabeceras ("header.h") donde situar  **/
-/** las definiciones de constantes, variables y estructuras para MenosC.20  **/
-/** Los alumos deberan adaptarlo al desarrollo de su propio compilador.     **/ 
+/**  GRUPO 12:                                                              **/                                                                            
+/**  Martin Quesada Zaragoza                                                **/
+/**  Nahuel Unai Rosello Beneitez                                           **/
+/**  Manuel Rosello Oviedo                                                  **/                                     
 /*****************************************************************************/
 #ifndef _HEADER_H
 #define _HEADER_H
