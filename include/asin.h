@@ -72,15 +72,15 @@ extern int yydebug;
     CCOR_ = 282,
     ALLAV_ = 283,
     CLLAV_ = 284,
-    ASIG_ = 285,
-    MASASIG_ = 286,
-    MENOSASIG_ = 287,
-    PORASIG_ = 288,
-    DIVASIG_ = 289,
-    ASIGASIG_ = 290,
-    NOTASIG_ = 291,
-    AND_ = 292,
-    OR_ = 293,
+    AND_ = 285,
+    OR_ = 286,
+    ASIG_ = 287,
+    MASASIG_ = 288,
+    MENOSASIG_ = 289,
+    PORASIG_ = 290,
+    DIVASIG_ = 291,
+    ASIGASIG_ = 292,
+    NOTASIG_ = 293,
     MAYOR_ = 294,
     MENOR_ = 295,
     MAYORASIG_ = 296,
@@ -95,7 +95,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 13 "src/asin.y" /* yacc.c:1909  */
+#line 15 "src/asin.y" /* yacc.c:1909  */
 
     char *id;
     int cte;

@@ -24,7 +24,7 @@ void yyerror(const char * msg)
 /*****************************************************************************/
 int main (int argc, char **argv) 
 /* Gestiona la linea de comandos e invoca al analizador sintactico-semantico.*/
-{ int i, n = 1;
+{ int i, n = 1; char *nom_fich;
 
   for (i=1; i<argc; ++i) { 
     if (strcmp(argv[i], "-v")==0) { verbosidad = TRUE; n++; }

@@ -9,6 +9,7 @@
 #include <string.h>
 #include "header.h"
 #include "libtds.h"
+#include "libgci.h"
 %}
 
 %union {
@@ -33,10 +34,11 @@
 %type <ctestr> operadorUnario
 %type <tipo> tipoSimple
 %type <lcstr> listaCampos
+%type <tipo> operadorAditivo operadorMultiplicativo
 
 %%
 
-programa                : ALLAV_ { dvar = 0; } secuenciaSentencias CLLAV_ { if (verTDS) { verTdS(); } }
+programa                : ALLAV_ { dvar = 0; si = 0; } secuenciaSentencias CLLAV_ { if (verTDS) { verTdS(); } }
                         ;
 secuenciaSentencias     : sentencia
                         | secuenciaSentencias sentencia
@@ -144,6 +146,9 @@ instruccionEntradaSalida : READ_ APAR_ ID_ CPAR_ SEMICOL_
                                 else if (sim.tipo != T_ENTERO) {
                                     yyerror("Error en la instruccion de lectura: la variable no es de tipo entero.");
                                 }
+                                else {
+                                    
+                                }
                             }
                         | PRINT_ APAR_ expresion CPAR_ SEMICOL_
                             {
@@ -152,6 +157,11 @@ instruccionEntradaSalida : READ_ APAR_ ID_ CPAR_ SEMICOL_
                                 }
                                 else if ($3.tipo != T_ENTERO) {
                                     yyerror("Error en la instruccion de escritura: la variable no es de tipo entero.");
+                                }
+                                else {
+                                    // Pensamos que si es una variable hay que usar crArgPos()
+                                    // y si es una constante hay que usar crArgEnt()
+                                    emite(EWRITE, crArgNul(), crArgNul(), crArgPos($3.pos));
                                 }
                             }
                         ;
@@ -183,7 +193,7 @@ instruccionExpresion    : expresion SEMICOL_
 expresion               : expresionLogica
                             {
                                 $$.tipo = $1.tipo;
-                                /* $$.cte = $1.cte; */
+                                $$.pos = $1.pos;
                             }
                         | ID_ operadorAsignacion expresion
                             {
@@ -336,6 +346,8 @@ expresionAditiva        : expresionMultiplicativa
                                 }
                                 else {
                                     $$.tipo = T_ENTERO;
+                                    $$.pos = creaVarTemp();
+                                    emite($2, crArgPos($1.pos), crArgPos($3.pos), crArgPos($$.pos));
                                 }
                             }
                         ;
@@ -466,9 +478,9 @@ expresionSufija         : APAR_ expresion CPAR_
                                 $$.tipo = $1.tipo;
                             }
                         ;
-constante               : CTE_ {$$.tipo = T_ENTERO; $$.cte = $1;}
-                        | TRUE_ {$$.tipo = T_LOGICO; $$.cte = TRUE;}
-                        | FALSE_ {$$.tipo = T_LOGICO; $$.cte = FALSE;}
+constante               : CTE_ {$$.tipo = T_ENTERO; $$.pos = $1;}
+                        | TRUE_ {$$.tipo = T_LOGICO; $$.pos = TRUE;}
+                        | FALSE_ {$$.tipo = T_LOGICO; $$.pos = FALSE;}
                         ;
 operadorAsignacion      : ASIG_
                         | MASASIG_
@@ -488,11 +500,26 @@ operadorRelacional      : MAYOR_
                         | MENORASIG_
                         ;
 operadorAditivo         : MAS_
+                            {
+                                $$ = ESUM;
+                            }
                         | MENOS_
+                            {
+                                $$ = EDIF;
+                            }
                         ;
 operadorMultiplicativo  : POR_
+                            {
+                                $$ = EMULT;
+                            }
                         | DIV_
+                            {
+                                $$ = EDIVI;
+                            }
                         | MOD_
+                            {
+                                $$ = RESTO;
+                            }
                         ;
 operadorUnario          : MAS_
                             {
