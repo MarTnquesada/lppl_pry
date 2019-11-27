@@ -28,7 +28,7 @@
 %token <cte> CTE_
 
 %type <ctestr> constante
-%type <ctestr> expresion expresionAditiva expresionIgualdad expresionLogica 
+%type <ctestr> expresion expresionAditiva expresionIgualdad expresionLogica
 %type <ctestr> expresionMultiplicativa expresionRelacional expresionSufija expresionUnaria
 %type <ctestr> operadorUnario
 %type <tipo> tipoSimple
