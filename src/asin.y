@@ -34,7 +34,7 @@
 %type <ctestr> operadorUnario
 %type <tipo> tipoSimple
 %type <lcstr> listaCampos
-%type <tipo> operadorAditivo operadorMultiplicativo
+%type <tipo> operadorAditivo operadorMultiplicativo operadorIncremento
 
 %%
 
@@ -398,12 +398,18 @@ expresionUnaria         : expresionSufija
                                 }
                                 else {
                                     $$.tipo = T_ENTERO;
+                                    
+                                    //emite($1, crArgPos(sim.pos), crArgEnt(1), crArgPos($2.pos));
+                                    // También asignar al padre el valor del hijo
+                                    $$.pos = creaVarTemp();
+                                    //emite(EASIG, crArgPos($2.pos), crArgNul(), crArgPos($$.pos));
                                 }
                             }
                         ;
 expresionSufija         : APAR_ expresion CPAR_
                             {
                                 $$.tipo = $2.tipo;
+                                $$.pos = $2.pos;
                             }
                         | ID_ operadorIncremento
                             {
@@ -417,6 +423,7 @@ expresionSufija         : APAR_ expresion CPAR_
                                 }
                                 else {
                                     $$.tipo = T_ENTERO;
+                                    
                                 }
                             }
                         | ID_ ACOR_ expresion CCOR_
@@ -439,6 +446,7 @@ expresionSufija         : APAR_ expresion CPAR_
                                     }
                                     else {
                                         $$.tipo = arr.telem;
+                                        // Se comprueba en tiempo de ejecución, por lo que LO COMPROBAMOS LUEGO XD
                                     }
                                 }
                             }
@@ -451,6 +459,7 @@ expresionSufija         : APAR_ expresion CPAR_
                                 }
                                 else {
                                     $$.tipo = sim.tipo;
+                                    $$.pos = sim.desp;
                                 }
                             }
                         | ID_ SEP_ ID_
@@ -470,17 +479,37 @@ expresionSufija         : APAR_ expresion CPAR_
                                     }
                                     else {
                                         $$.tipo = camp.tipo;
+                                        int absDesp = creaVarTemp();
+                                        emite(ESUM, crArgEnt(sim.desp), crArgEnt(camp.desp), absDesp);
+                                        $$.pos = creaVarTemp();
+                                        emite(EASIG, absDesp, crArgNul(), crArgPos($$.pos));
                                     }
                                 }
                             }
                         | constante
                             {
                                 $$.tipo = $1.tipo;
+                                $$.pos = $1.pos;
                             }
                         ;
-constante               : CTE_ {$$.tipo = T_ENTERO; $$.pos = $1;}
-                        | TRUE_ {$$.tipo = T_LOGICO; $$.pos = TRUE;}
-                        | FALSE_ {$$.tipo = T_LOGICO; $$.pos = FALSE;}
+constante               : CTE_
+                            {
+                                $$.tipo = T_ENTERO; $$.pos = $1;
+                                $$.pos = creaVarTemp();
+                                emite(EASIG, crArgEnt($1), crArgNul(), crArgPos($$.pos));
+                            }
+                        | TRUE_
+                            {
+                                $$.tipo = T_LOGICO;
+                                $$.pos = creaVarTemp();
+                                emite(EASIG, crArgEnt(TRUE), crArgNul(), crArgPos($$.pos));
+                            }
+                        | FALSE_
+                            {
+                                $$.tipo = T_LOGICO;
+                                $$.pos = creaVarTemp();
+                                emite(EASIG, crArgEnt(FALSE), crArgNul(), crArgPos($$.pos));
+                            }
                         ;
 operadorAsignacion      : ASIG_
                         | MASASIG_
@@ -524,10 +553,14 @@ operadorMultiplicativo  : POR_
 operadorUnario          : MAS_
                             {
                                 $$.tipo = T_ENTERO;
+                                // TODO: quizá limpiar algo
+                                // $$ = ??
                             }
                         | MENOS_
                             {
-                                $$.tipo = T_ENTERO;
+                                // $$.tipo = T_ENTERO;
+                                // TODO: quizá limpiar algo
+                                // $$ = ESIG
                             }
                         | NOT_
                             {
@@ -535,7 +568,13 @@ operadorUnario          : MAS_
                             }
                         ;
 operadorIncremento      : MASMAS_
+                            {
+                                $$ = ESUM;
+                            }
                         | MENOSMENOS_
+                            {
+                                $$ = EDIF;
+                            }
                         ;
 %%
 /*****************************************************************************/

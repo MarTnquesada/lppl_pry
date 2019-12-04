@@ -1,4 +1,4 @@
 {
     int b = 5;
-    print(b);
+    print(5);
 }
