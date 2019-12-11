@@ -66,7 +66,7 @@ declaracion             : tipoSimple ID_ SEMICOL_
                                 else if ($1 != $4.tipo) {
                                     yyerror("Error en la declaracion de la variable: error de incompatibilidad de tipos.");
                                 }
-                                else {
+                                else {EIGUAL
                                     insTdS($2, $1, dvar, -1);
                                     dvar += TALLA_TIPO_SIMPLE;
                                 }
@@ -128,7 +128,7 @@ listaCampos             : tipoSimple ID_ SEMICOL_
                             }
                         ;
 instruccion             : ALLAV_ CLLAV_
-                        | ALLAV_ listaInstrucciones CLLAV_
+                        | ALLAV_ listaInstrucciones CLLAVEIGUAL
                         | instruccionEntradaSalida
                         | instruccionSeleccion
                         | instruccionIteracion
@@ -137,7 +137,7 @@ instruccion             : ALLAV_ CLLAV_
 listaInstrucciones      : instruccion
                         | listaInstrucciones instruccion
                         ;
-instruccionEntradaSalida : READ_ APAR_ ID_ CPAR_ SEMICOL_
+instruccionEntradaSalida : READ_ APAR_ ID_ CPAR_ SEMICOL_EIGUAL
                             {
                                 SIMB sim = obtTdS($3);
                                 if (sim.tipo == T_ERROR) {
@@ -167,6 +167,14 @@ instruccionEntradaSalida : READ_ APAR_ ID_ CPAR_ SEMICOL_
                         ;
 instruccionSeleccion    : IF_ APAR_ expresion CPAR_
                             {
+                                // TODO: meter código a mitad de regla xd
+                                // Si hay $$ a mitad de regla no va a la parte izquierda de la regla!!
+                                // Cómo ir a la parte izquierda?
+                                // Solución: bison crea un no-terminal @1, @2, ..., por lo que OJO! Los $<número> se modifican
+                                // Hay que especificar el tipo de $$ en cada secuencia a mitad de regla tal que así:
+                                // $< <tipo-variable> >$.[...]
+                                // Y después podemos usar este bloque de código tal que así. Imaginando que nos referimos al primer bloque (nuevo no-terminal 2):
+                                // $< <tipo-variable> >2.[...]
                                 if ($3.tipo == T_ERROR) {
                                     // Ninguna salida por pantalla, ya la hemos hecho donde toca
                                 }
@@ -178,6 +186,7 @@ instruccionSeleccion    : IF_ APAR_ expresion CPAR_
                         ;
 instruccionIteracion    : WHILE_ APAR_ expresion CPAR_
                             {
+                                // TODO: meter código a mitad de regla xd
                                 if ($3.tipo == T_ERROR) {
                                     // Ninguna salida por pantalla, ya la hemos hecho donde toca
                                 }
@@ -325,6 +334,18 @@ expresionRelacional     : expresionAditiva
                                 }
                                 else {
                                     $$.tipo = T_LOGICO;
+                                    // Si se cumple exprRel opRel exprAd, entonces ponemos 1. Si no, ponemos 0
+                                    $$.pos = creaVarTemp();
+
+                                    // Paso 0: si se cumple exprRel opRel exprAd, entonces saltamos a Paso 3.
+                                    emite($2, crArgPos($1.pos), crArgPos($3.pos), crArgEtq(si + 3));
+                                    // Paso 1: lo de arriba era falso. Ponemos falso.
+                                    emite(EASIG, crArgEnt(FALSE), crArgNul(), crArgPos($$.pos));
+                                    // Paso 2: Saltamos al Paso 4
+                                    emite(GOTOS, crArgNul(), crArgNul(), crArgEtq(si + 2));
+                                    // Paso 3: lo de arriba era verdadero. Ponemos verdadero.
+                                    emite(EASIG, crArgEnt(TRUE), crArgNul(), crArgPos($$.pos));
+                                    // Paso 4: se continúa la ejecución
                                 }
                             }
                         ;
@@ -384,6 +405,14 @@ expresionUnaria         : expresionSufija
                                 }
                                 else {
                                     $$.tipo = $2.tipo;
+                                    $$.pos = creaVarTemp();
+                                    if ($1.tipo == T_ENTERO) {
+                                        emite($1.pos, crArgEnt(0), crArgPos($2.pos), crArgPos($$.pos));
+                                    }
+                                    else {  // T_LOGICO
+                                        // resultado = 1 - valor
+                                        emite($1.pos, crArgEnt(1), crArgPos($2.pos), crArgPos($$.pos));
+                                    }
                                 }
                             }
                         | operadorIncremento ID_
@@ -398,13 +427,12 @@ expresionUnaria         : expresionSufija
                                 }
                                 else {
                                     $$.tipo = T_ENTERO;
-                                    
-                                    //emite($1, crArgPos(sim.pos), crArgEnt(1), crArgPos($2.pos));
-                                    // También asignar al padre el valor del hijo
                                     $$.pos = creaVarTemp();
-                                    //emite(EASIG, crArgPos($2.pos), crArgNul(), crArgPos($$.pos));
+                                    emite($1, crArgPos(sim.desp), crArgEnt(1), crArgPos(sim.desp));
+                                    // También asignar al padre el valor del hijo
+                                    emite(EASIG, crArgPos(sim.desp), crArgNul(), crArgPos($$.pos));
                                 }
-                            }
+                            }EIGUAL
                         ;
 expresionSufija         : APAR_ expresion CPAR_
                             {
@@ -423,7 +451,10 @@ expresionSufija         : APAR_ expresion CPAR_
                                 }
                                 else {
                                     $$.tipo = T_ENTERO;
-                                    
+                                    $$.pos = creaVarTemp();
+                                    // También asignar al padre el valor del hijo
+                                    emite(EASIG, crArgPos(sim.desp), crArgNul(), crArgPos($$.pos));
+                                    emite($1, crArgPos(sim.desp), crArgEnt(1), crArgPos(sim.desp));
                                 }
                             }
                         | ID_ ACOR_ expresion CCOR_
@@ -479,8 +510,7 @@ expresionSufija         : APAR_ expresion CPAR_
                                     }
                                     else {
                                         $$.tipo = camp.tipo;
-                                        int absDesp = creaVarTemp();
-                                        emite(ESUM, crArgEnt(sim.desp), crArgEnt(camp.desp), absDesp);
+                                        int absDesp = sim.desp + camp.desp;
                                         $$.pos = creaVarTemp();
                                         emite(EASIG, absDesp, crArgNul(), crArgPos($$.pos));
                                     }
@@ -512,21 +542,67 @@ constante               : CTE_
                             }
                         ;
 operadorAsignacion      : ASIG_
+                            {
+                                // Comprobaremos que no sea EASIG
+                                // si no lo es, hacemos la operacion correspondiente
+                                // fuera de ese if, para todos los casos, hacemos asignacion
+                                // De esta forma, conseguimos que asig solo se haga una vez para asig
+                                // y que para los demas se haga la operacion y luego se asigne 
+                                $$ = EASIG;
+                            }
                         | MASASIG_
+                            {
+                                $$ = ESUM;
+                            }
                         | MENOSASIG_
+                        {
+                                $$ = EDIF;
+                            }
                         | PORASIG_
+                            {
+                                $$ = EMULT;
+                            }
                         | DIVASIG_
+                            {
+                                $$ = EDIVI;
+                            }
                         ;
 operadorLogico          : AND_
+                            {
+                                // Multiplicamos, si da 1 true, si da 0 false
+                                $$ = EMULT;
+                            }
                         | OR_
+                            {
+                                // Sumamos, si da >=1 true, si da <1 false
+                                $$ = ESUM;
+                            }
                         ;
 operadorIgualdad        : ASIGASIG_
+                            {
+                                $$ = EIGUAL;
+                            }
                         | NOTASIG_
+                            {
+                                $$ = EDIST;
+                            }
                         ;
 operadorRelacional      : MAYOR_
+                            {
+                                $$ = EMAY;
+                            }
                         | MENOR_
+                            {
+                                $$ = EMEN;
+                            }
                         | MAYORASIG_
+                            {
+                                $$ = EMAYEQ;
+                            }
                         | MENORASIG_
+                            {
+                                $$ = EMENEQ;
+                            }
                         ;
 operadorAditivo         : MAS_
                             {
@@ -553,18 +629,18 @@ operadorMultiplicativo  : POR_
 operadorUnario          : MAS_
                             {
                                 $$.tipo = T_ENTERO;
-                                // TODO: quizá limpiar algo
-                                // $$ = ??
+                                $$.pos = ESUM;
                             }
                         | MENOS_
                             {
-                                // $$.tipo = T_ENTERO;
-                                // TODO: quizá limpiar algo
-                                // $$ = ESIG
+                                $$.tipo = T_ENTERO;
+                                $$.pos = EDIF;
                             }
                         | NOT_
                             {
+                                // Restamos (1 - valor) ver arriba
                                 $$.tipo = T_LOGICO;
+                                $$.pos = EDIF;
                             }
                         ;
 operadorIncremento      : MASMAS_
