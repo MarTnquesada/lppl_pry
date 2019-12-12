@@ -66,7 +66,7 @@ declaracion             : tipoSimple ID_ SEMICOL_
                                 else if ($1 != $4.tipo) {
                                     yyerror("Error en la declaracion de la variable: error de incompatibilidad de tipos.");
                                 }
-                                else {EIGUAL
+                                else {
                                     insTdS($2, $1, dvar, -1);
                                     dvar += TALLA_TIPO_SIMPLE;
                                 }
@@ -280,6 +280,7 @@ expresion               : expresionLogica
 expresionLogica         : expresionIgualdad
                             {
                                 $$.tipo = $1.tipo;
+                                $$.pos = $1.pos;
                             }
                         | expresionLogica operadorLogico expresionIgualdad
                             {
@@ -295,12 +296,22 @@ expresionLogica         : expresionIgualdad
                                 }
                                 else {
                                     $$.tipo = T_LOGICO;
+                                    $$.pos = creaVarTemp();
+                                    emite($2, crArgPos($1.pos), crArgPos($3.pos), crArgPos($$.pos));
+                                    if ($2 == ESUM) {
+                                        // OR
+                                        // Si eran los dos TRUE, la suma es 2
+                                        // Hay que comprobar si esto pasa para asignar TRUE
+                                        emite(EMEN, crArgPos($$.pos), crArgEnt(2), crArgEtq(si + 2));
+                                        emite(EASIG, crArgEnt(TRUE), crArgNul(), crArgPos($$.pos));
+                                    }
                                 }
                             }
                         ;
 expresionIgualdad       : expresionRelacional
                             {
                                 $$.tipo = $1.tipo;
+                                $$.pos = $1.pos;
                             }
                         | expresionIgualdad operadorIgualdad expresionRelacional
                             {
@@ -313,12 +324,21 @@ expresionIgualdad       : expresionRelacional
                                 }
                                 else {
                                     $$.tipo = T_LOGICO;
+                                    $$.pos = creaVarTemp();
+
+                                    // Ver expresionRelacional
+                                    emite($2, crArgPos($1.pos), crArgPos($3.pos), crArgEtq(si + 3));
+                                    emite(EASIG, crArgEnt(FALSE), crArgNul(), crArgPos($$.pos));
+                                    emite(GOTOS, crArgNul(), crArgNul(), crArgEtq(si + 2));
+                                    emite(EASIG, crArgEnt(TRUE), crArgNul(), crArgPos($$.pos));
+
                                 }
                             }
                         ;
 expresionRelacional     : expresionAditiva
                             {
                                 $$.tipo = $1.tipo;
+                                $$.pos = $1.pos;
                             }
                         | expresionRelacional operadorRelacional expresionAditiva
                             {
@@ -352,6 +372,7 @@ expresionRelacional     : expresionAditiva
 expresionAditiva        : expresionMultiplicativa
                             {
                                 $$.tipo = $1.tipo;
+                                $$.pos = $1.pos;
                             }
                         | expresionAditiva operadorAditivo expresionMultiplicativa
                             {
@@ -375,6 +396,7 @@ expresionAditiva        : expresionMultiplicativa
 expresionMultiplicativa  : expresionUnaria 
                             {
                                 $$.tipo = $1.tipo;
+                                $$.pos = $1.pos;
                             }
                         | expresionMultiplicativa operadorMultiplicativo expresionUnaria
                             {
@@ -390,6 +412,8 @@ expresionMultiplicativa  : expresionUnaria
                                 }
                                 else {
                                     $$.tipo = T_ENTERO;
+                                    $$.pos = creaVarTemp();
+                                    emite($2, crArgPos($1), crArgPos($3), crArgPos($$.pos));
                                 }
                             }
                         ;
@@ -409,7 +433,8 @@ expresionUnaria         : expresionSufija
                                     if ($1.tipo == T_ENTERO) {
                                         emite($1.pos, crArgEnt(0), crArgPos($2.pos), crArgPos($$.pos));
                                     }
-                                    else {  // T_LOGICO
+                                    else {
+                                        // T_LOGICO
                                         // resultado = 1 - valor
                                         emite($1.pos, crArgEnt(1), crArgPos($2.pos), crArgPos($$.pos));
                                     }
@@ -432,7 +457,7 @@ expresionUnaria         : expresionSufija
                                     // También asignar al padre el valor del hijo
                                     emite(EASIG, crArgPos(sim.desp), crArgNul(), crArgPos($$.pos));
                                 }
-                            }EIGUAL
+                            }
                         ;
 expresionSufija         : APAR_ expresion CPAR_
                             {
@@ -478,6 +503,18 @@ expresionSufija         : APAR_ expresion CPAR_
                                     else {
                                         $$.tipo = arr.telem;
                                         // Se comprueba en tiempo de ejecución, por lo que LO COMPROBAMOS LUEGO XD
+                                        int aux = creaVarTemp();
+                                        // Nota: no multiplicamos la expresión por TALLA_TIPO_SIMPLE porque es 1
+                                        // Si expresion < 0 entonces peto
+                                        emite(EMEN, crArgPos($3.pos), crArgEnt(0), si + 2);
+                                        // No he petado aún; si expresion < arr.nelem entonces sigo
+                                        emite(EMEN, crArgPos($3.pos), crArgEnt(arr.nelem), si + 2);
+                                        // He petado. Acabo el programa.
+                                        emite(FIN, crArgNul(), crArgNul(), crArgNul());
+                                        // No he petado en esta instrucción. Prosigo normalmente.
+                                        emite(ESUM, crArgPos(sim.desp), crArgPos($3.pos), aux);
+                                        $$.pos = creaVarTemp();
+                                        emite(EASIG, crArgPos(aux), crArgNul(), crArgPos($$.pos));
                                     }
                                 }
                             }
