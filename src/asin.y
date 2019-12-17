@@ -217,9 +217,14 @@ expresion               : expresionLogica
                                     yyerror("Error en la asignacion: error de incompatibilidad de tipos.");
                                 }
                                 else {
-                                    $$.tipo = T_VACIO;
+                                    $$.tipo = $3.tipo;
                                     $$.pos = creaVarTemp();
-                                    emite(EASIG, crArgPos($3.pos), crArgNul(), crArgPos(sim.desp));
+                                    if($2 != EASIG){
+                                        emite($2, crArgPos(sim.desp), crArgPos($3.pos),  crArgPos(sim.desp));
+                                    }
+                                    else {
+                                        emite(EASIG, crArgPos($3.pos), crArgNul(), crArgPos(sim.desp));
+                                    }
                                     emite(EASIG, crArgPos(sim.desp), crArgNul(), crArgPos($$.pos));
                                 }
                             }
@@ -248,7 +253,7 @@ expresion               : expresionLogica
                                         yyerror("Error en la asignacion: error de incompatibilidad de tipos.");
                                     }
                                     else {
-                                        $$.tipo = T_VACIO;
+                                        $$.tipo = $6.tipo;
                                         // Nota: no multiplicamos la expresión por TALLA_TIPO_SIMPLE porque es 1
                                         // Si expresion < 0 entonces peto
                                         emite(EMEN, crArgPos($3.pos), crArgEnt(0), crArgEtq(si + 2));
@@ -260,9 +265,17 @@ expresion               : expresionLogica
                                         emite(FIN, crArgNul(), crArgNul(), crArgNul());
                                         
                                         // No he petado en esta instrucción. Prosigo normalmente.
-                                        emite(EVA, crArgPos(sim.desp), crArgPos($3.pos), crArgPos($6.pos));
+                                        int aux = creaVarTemp();
                                         $$.pos = creaVarTemp();
-                                        emite(EASIG, crArgPos($6.pos), crArgNul(), crArgPos($$.pos));
+                                        if($5 != EASIG){
+                                            emite($5, crArgPos(sim.desp), crArgPos($3.pos),  crArgPos(aux));
+                                            emite(EVA, crArgPos(sim.desp), crArgPos($3.pos), crArgPos(aux));
+                                            emite(EASIG, crArgPos(aux), crArgNul(), crArgPos($$.pos));
+                                        }
+                                        else {
+                                            emite(EVA, crArgPos(sim.desp), crArgPos($3.pos), crArgPos($6.pos));
+                                            emite(EASIG, crArgPos($6.pos), crArgNul(), crArgPos($$.pos));
+                                        }    
                                     }
                                 }
                             }
@@ -288,10 +301,16 @@ expresion               : expresionLogica
                                         yyerror("Error en la asignacion: error de incompatibilidad de tipos.");
                                     }
                                     else {
-                                        $$.tipo = T_VACIO;
+                                        $$.tipo = $5.tipo;
                                         $$.pos = creaVarTemp();
                                         int absDesp = sim.desp + camp.desp;
-                                        emite(EASIG, crArgPos($5.pos), crArgNul(), crArgPos(absDesp));
+
+                                        if($4 != EASIG){
+                                            emite($4, crArgPos(absDesp), crArgPos($5.pos),  crArgPos(absDesp));
+                                        }
+                                        else {
+                                            emite(EASIG, crArgPos($5.pos), crArgNul(), crArgPos(absDesp));
+                                        }
                                         emite(EASIG, crArgPos(absDesp), crArgNul(), crArgPos($$.pos));
                                     }
                                 }
