@@ -31,10 +31,10 @@
 %type <ctestr> constante
 %type <ctestr> expresion expresionAditiva expresionIgualdad expresionLogica
 %type <ctestr> expresionMultiplicativa expresionRelacional expresionSufija expresionUnaria
-%type <ctestr> operadorUnario
+%type <ctestr> operadorUnario 
+%type <tipo> operadorLogico operadorRelacional operadorIgualdad operadorAditivo operadorAsignacion operadorMultiplicativo operadorIncremento
 %type <tipo> tipoSimple
 %type <lcstr> listaCampos
-%type <tipo> operadorAditivo operadorMultiplicativo operadorIncremento
 
 %%
 
@@ -68,6 +68,7 @@ declaracion             : tipoSimple ID_ SEMICOL_
                                 }
                                 else {
                                     insTdS($2, $1, dvar, -1);
+                                    emite(EASIG, crArgPos($4.pos), crArgNul(), crArgPos(dvar));
                                     dvar += TALLA_TIPO_SIMPLE;
                                 }
                             }
@@ -128,7 +129,7 @@ listaCampos             : tipoSimple ID_ SEMICOL_
                             }
                         ;
 instruccion             : ALLAV_ CLLAV_
-                        | ALLAV_ listaInstrucciones CLLAVEIGUAL
+                        | ALLAV_ listaInstrucciones CLLAV_
                         | instruccionEntradaSalida
                         | instruccionSeleccion
                         | instruccionIteracion
@@ -137,7 +138,7 @@ instruccion             : ALLAV_ CLLAV_
 listaInstrucciones      : instruccion
                         | listaInstrucciones instruccion
                         ;
-instruccionEntradaSalida : READ_ APAR_ ID_ CPAR_ SEMICOL_EIGUAL
+instruccionEntradaSalida : READ_ APAR_ ID_ CPAR_ SEMICOL_
                             {
                                 SIMB sim = obtTdS($3);
                                 if (sim.tipo == T_ERROR) {
@@ -147,7 +148,7 @@ instruccionEntradaSalida : READ_ APAR_ ID_ CPAR_ SEMICOL_EIGUAL
                                     yyerror("Error en la instruccion de lectura: la variable no es de tipo entero.");
                                 }
                                 else {
-                                    
+                                    emite(EREAD, crArgNul(), crArgNul(), crArgPos(sim.desp));
                                 }
                             }
                         | PRINT_ APAR_ expresion CPAR_ SEMICOL_
@@ -159,8 +160,6 @@ instruccionEntradaSalida : READ_ APAR_ ID_ CPAR_ SEMICOL_EIGUAL
                                     yyerror("Error en la instruccion de escritura: la variable no es de tipo entero.");
                                 }
                                 else {
-                                    // Pensamos que si es una variable hay que usar crArgPos()
-                                    // y si es una constante hay que usar crArgEnt()
                                     emite(EWRITE, crArgNul(), crArgNul(), crArgPos($3.pos));
                                 }
                             }
@@ -219,6 +218,9 @@ expresion               : expresionLogica
                                 }
                                 else {
                                     $$.tipo = T_VACIO;
+                                    $$.pos = creaVarTemp();
+                                    emite(EASIG, crArgPos($3.pos), crArgNul(), crArgPos(sim.desp));
+                                    emite(EASIG, crArgPos(sim.desp), crArgNul(), crArgPos($$.pos));
                                 }
                             }
                         | ID_ ACOR_ expresion CCOR_ operadorAsignacion expresion
@@ -247,6 +249,20 @@ expresion               : expresionLogica
                                     }
                                     else {
                                         $$.tipo = T_VACIO;
+                                        // Nota: no multiplicamos la expresión por TALLA_TIPO_SIMPLE porque es 1
+                                        // Si expresion < 0 entonces peto
+                                        emite(EMEN, crArgPos($3.pos), crArgEnt(0), crArgEtq(si + 2));
+
+                                        // No he petado aún; si expresion < arr.nelem entonces sigo
+                                        emite(EMEN, crArgPos($3.pos), crArgEnt(arr.nelem), crArgEtq(si + 2));
+                                        
+                                        // He petado. Acabo el programa.
+                                        emite(FIN, crArgNul(), crArgNul(), crArgNul());
+                                        
+                                        // No he petado en esta instrucción. Prosigo normalmente.
+                                        emite(EVA, crArgPos(sim.desp), crArgPos($3.pos), crArgPos($6.pos));
+                                        $$.pos = creaVarTemp();
+                                        emite(EASIG, crArgPos($6.pos), crArgNul(), crArgPos($$.pos));
                                     }
                                 }
                             }
@@ -273,6 +289,10 @@ expresion               : expresionLogica
                                     }
                                     else {
                                         $$.tipo = T_VACIO;
+                                        $$.pos = creaVarTemp();
+                                        int absDesp = sim.desp + camp.desp;
+                                        emite(EASIG, crArgPos($5.pos), crArgNul(), crArgPos(absDesp));
+                                        emite(EASIG, crArgPos(absDesp), crArgNul(), crArgPos($$.pos));
                                     }
                                 }
                             }
@@ -413,13 +433,14 @@ expresionMultiplicativa  : expresionUnaria
                                 else {
                                     $$.tipo = T_ENTERO;
                                     $$.pos = creaVarTemp();
-                                    emite($2, crArgPos($1), crArgPos($3), crArgPos($$.pos));
+                                    emite($2, crArgPos($1.pos), crArgPos($3.pos), crArgPos($$.pos));
                                 }
                             }
                         ;
 expresionUnaria         : expresionSufija
                             {
                                 $$.tipo = $1.tipo;
+                                $$.pos = $1.pos;
                             }
                         | operadorUnario expresionUnaria
                             {
@@ -479,7 +500,7 @@ expresionSufija         : APAR_ expresion CPAR_
                                     $$.pos = creaVarTemp();
                                     // También asignar al padre el valor del hijo
                                     emite(EASIG, crArgPos(sim.desp), crArgNul(), crArgPos($$.pos));
-                                    emite($1, crArgPos(sim.desp), crArgEnt(1), crArgPos(sim.desp));
+                                    emite($2, crArgPos(sim.desp), crArgEnt(1), crArgPos(sim.desp));
                                 }
                             }
                         | ID_ ACOR_ expresion CCOR_
@@ -506,13 +527,13 @@ expresionSufija         : APAR_ expresion CPAR_
                                         int aux = creaVarTemp();
                                         // Nota: no multiplicamos la expresión por TALLA_TIPO_SIMPLE porque es 1
                                         // Si expresion < 0 entonces peto
-                                        emite(EMEN, crArgPos($3.pos), crArgEnt(0), si + 2);
+                                        emite(EMEN, crArgPos($3.pos), crArgEnt(0), crArgEtq(si + 2));
                                         // No he petado aún; si expresion < arr.nelem entonces sigo
-                                        emite(EMEN, crArgPos($3.pos), crArgEnt(arr.nelem), si + 2);
+                                        emite(EMEN, crArgPos($3.pos), crArgEnt(arr.nelem), crArgEtq(si + 2));
                                         // He petado. Acabo el programa.
                                         emite(FIN, crArgNul(), crArgNul(), crArgNul());
                                         // No he petado en esta instrucción. Prosigo normalmente.
-                                        emite(ESUM, crArgPos(sim.desp), crArgPos($3.pos), aux);
+                                        emite(ESUM, crArgPos(sim.desp), crArgPos($3.pos), crArgPos(aux));
                                         $$.pos = creaVarTemp();
                                         emite(EASIG, crArgPos(aux), crArgNul(), crArgPos($$.pos));
                                     }
@@ -549,7 +570,7 @@ expresionSufija         : APAR_ expresion CPAR_
                                         $$.tipo = camp.tipo;
                                         int absDesp = sim.desp + camp.desp;
                                         $$.pos = creaVarTemp();
-                                        emite(EASIG, absDesp, crArgNul(), crArgPos($$.pos));
+                                        emite(EASIG, crArgPos(absDesp), crArgNul(), crArgPos($$.pos));
                                     }
                                 }
                             }
