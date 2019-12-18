@@ -21,13 +21,13 @@
     JMPSTRUCT jmpstr;
 }
 
-%token STRUCT_ INT_ BOOL_ READ_ PRINT_ WHILE_ FOR_ IF_ ELSE_ TRUE_ FALSE_
+%token STRUCT_ INT_ BOOL_ READ_ PRINT_ WHILE_ FOR_ IF_ ELSE_
 %token SEP_ SEMICOL_ MAS_ MENOS_ NOT_ POR_ DIV_ MOD_ MASMAS_ MENOSMENOS_ 
 %token APAR_ CPAR_ ACOR_ CCOR_ ALLAV_ CLLAV_ AND_ OR_
 %token ASIG_ MASASIG_ MENOSASIG_ PORASIG_ DIVASIG_
 %token ASIGASIG_ NOTASIG_ MAYOR_ MENOR_ MAYORASIG_ MENORASIG_
 %token <id> ID_
-%token <cte> CTE_
+%token <cte> CTE_ TRUE_ FALSE_
 
 %type <ctestr> constante
 %type <ctestr> expresion expresionAditiva expresionIgualdad expresionLogica
@@ -70,7 +70,7 @@ declaracion             : tipoSimple ID_ SEMICOL_
                                 }
                                 else {
                                     insTdS($2, $1, dvar, -1);
-                                    emite(EASIG, crArgPos($4.pos), crArgNul(), crArgPos(dvar));
+                                    emite(EASIG, crArgEnt($4.pos), crArgNul(), crArgPos(dvar));
                                     dvar += TALLA_TIPO_SIMPLE;
                                 }
                             }
@@ -623,26 +623,24 @@ expresionSufija         : APAR_ expresion CPAR_
                         | constante
                             {
                                 $$.tipo = $1.tipo;
-                                $$.pos = $1.pos;
+                                $$.pos = creaVarTemp();
+                                emite(EASIG, crArgEnt($1.pos), crArgNul(), crArgPos($$.pos));
                             }
                         ;
 constante               : CTE_
                             {
-                                $$.tipo = T_ENTERO; $$.pos = $1;
-                                $$.pos = creaVarTemp();
-                                emite(EASIG, crArgEnt($1), crArgNul(), crArgPos($$.pos));
+                                $$.tipo = T_ENTERO;
+                                $$.pos = $1;
                             }
                         | TRUE_
                             {
                                 $$.tipo = T_LOGICO;
-                                $$.pos = creaVarTemp();
-                                emite(EASIG, crArgEnt(TRUE), crArgNul(), crArgPos($$.pos));
+                                $$.pos = TRUE;
                             }
                         | FALSE_
                             {
                                 $$.tipo = T_LOGICO;
-                                $$.pos = creaVarTemp();
-                                emite(EASIG, crArgEnt(FALSE), crArgNul(), crArgPos($$.pos));
+                                $$.pos = FALSE;
                             }
                         ;
 operadorAsignacion      : ASIG_
