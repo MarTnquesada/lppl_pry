@@ -43,6 +43,13 @@ typedef struct lcStruct{
     int talla;
     int regRef;
 } LCSTRUCT;
+typedef struct jmpStruct{
+    int ini;
+    int jmpf;
+    int jmpv;
+    int fin;
+    int aux;
+} JMPSTRUCT;
 /*****************************************************************************/
 #endif  /* _HEADER_H */
 /*****************************************************************************/

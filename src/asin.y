@@ -18,6 +18,7 @@
     int tipo;
     LCSTRUCT lcstr;
     CTESTRUCT ctestr;
+    JMPSTRUCT jmpstr;
 }
 
 %token STRUCT_ INT_ BOOL_ READ_ PRINT_ WHILE_ FOR_ IF_ ELSE_ TRUE_ FALSE_
@@ -35,6 +36,7 @@
 %type <tipo> operadorLogico operadorRelacional operadorIgualdad operadorAditivo operadorAsignacion operadorMultiplicativo operadorIncremento
 %type <tipo> tipoSimple
 %type <lcstr> listaCampos
+%type <jmpstr> instruccionSeleccion instruccionIteracion
 
 %%
 
@@ -180,20 +182,45 @@ instruccionSeleccion    : IF_ APAR_ expresion CPAR_
                                 else if ($3.tipo != T_LOGICO) {
                                     yyerror("Error en la expresion condicional: expresion no valida en la guarda.");
                                 }
-                            }
-                        instruccion ELSE_ instruccion
-                        ;
-instruccionIteracion    : WHILE_ APAR_ expresion CPAR_
-                            {
-                                // TODO: meter código a mitad de regla xd
-                                if ($3.tipo == T_ERROR) {
-                                    // Ninguna salida por pantalla, ya la hemos hecho donde toca
-                                }
-                                else if ($3.tipo != T_LOGICO) {
-                                    yyerror("Error en la expresion de bucle: expresion no valida en la guarda.");
+                                else{
+                                    $<jmpstr>$.jmpf = creaLans(si);
+                                    emite(EIGUAL, crArgPos($3.pos), crArgEnt(FALSE), crArgEnt(-1));
                                 }
                             }
                         instruccion
+                            {
+                               $<jmpstr>5.fin = creaLans(si);
+                               emite(GOTOS, crArgNul(), crArgNul(), crArgEnt(-1)); 
+                               completaLans($<jmpstr>5.jmpf, crArgEtq(si));
+                            }
+                        ELSE_ instruccion 
+                            {
+                                completaLans($<jmpstr>5.fin, crArgEtq(si));
+                            }
+                        ;
+instruccionIteracion    : WHILE_ 
+                            {
+                                $<jmpstr>$.ini = si;
+                            }
+                        APAR_ expresion CPAR_
+                            {
+                                // TODO: meter código a mitad de regla xd
+                                if ($4.tipo == T_ERROR) {
+                                    // Ninguna salida por pantalla, ya la hemos hecho donde toca
+                                }
+                                else if ($4.tipo != T_LOGICO) {
+                                    yyerror("Error en la expresion de bucle: expresion no valida en la guarda.");
+                                }
+                                else{
+                                    $<jmpstr>2.jmpf = creaLans(si);
+                                    emite(EIGUAL, crArgPos($4.pos), crArgEnt(FALSE), crArgEnt(-1));
+                                }
+                            }
+                        instruccion
+                            {
+                                emite(GOTOS, crArgNul(), crArgNul(), crArgEtq($<jmpstr>2.ini));
+                                completaLans($<jmpstr>2.jmpf, crArgEtq(si));
+                            }
                         ;
 instruccionExpresion    : expresion SEMICOL_
                         | SEMICOL_

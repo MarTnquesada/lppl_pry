@@ -1,0 +1,46 @@
+  0 EREAD             ,          ,  p:   4  
+  1 EASIG     p:   4  ,          ,  p:   0  
+  2 EASIG     p:   0  ,          ,  p:   5  
+  3 EREAD             ,          ,  p:   4  
+  4 EASIG     p:   4  ,          ,  p:   1  
+  5 EASIG     p:   1  ,          ,  p:   6  
+  6 EASIG     p:   0  ,          ,  p:   7  
+  7 EASIG     p:   1  ,          ,  p:   8  
+  8 EDIST     p:   7  ,  p:   8  ,  e:  11  
+  9 EASIG     i:   0  ,          ,  p:   9  
+ 10 GOTOS             ,          ,  e:  12  
+ 11 EASIG     i:   1  ,          ,  p:   9  
+ 12 EIGUAL    p:   9  ,  i:   0  ,  e:  44  
+ 13 EASIG     p:   0  ,          ,  p:  10  
+ 14 EASIG     p:   1  ,          ,  p:  11  
+ 15 EMAY      p:  10  ,  p:  11  ,  e:  18  
+ 16 EASIG     i:   0  ,          ,  p:  12  
+ 17 GOTOS             ,          ,  e:  19  
+ 18 EASIG     i:   1  ,          ,  p:  12  
+ 19 EIGUAL    p:  12  ,  i:   0  ,  e:  29  
+ 20 EASIG     p:   1  ,          ,  p:  13  
+ 21 EASIG     p:  13  ,          ,  p:   2  
+ 22 EASIG     p:   2  ,          ,  p:  14  
+ 23 EASIG     p:   0  ,          ,  p:  15  
+ 24 EASIG     p:   1  ,          ,  p:  16  
+ 25 EDIF      p:  15  ,  p:  16  ,  p:  17  
+ 26 EASIG     p:  17  ,          ,  p:   3  
+ 27 EASIG     p:   3  ,          ,  p:  18  
+ 28 GOTOS             ,          ,  e:  37  
+ 29 EASIG     p:   0  ,          ,  p:  19  
+ 30 EASIG     p:  19  ,          ,  p:   2  
+ 31 EASIG     p:   2  ,          ,  p:  20  
+ 32 EASIG     p:   1  ,          ,  p:  21  
+ 33 EASIG     p:   0  ,          ,  p:  22  
+ 34 EDIF      p:  21  ,  p:  22  ,  p:  23  
+ 35 EASIG     p:  23  ,          ,  p:   3  
+ 36 EASIG     p:   3  ,          ,  p:  24  
+ 37 EASIG     p:   2  ,          ,  p:  25  
+ 38 EASIG     p:  25  ,          ,  p:   0  
+ 39 EASIG     p:   0  ,          ,  p:  26  
+ 40 EASIG     p:   3  ,          ,  p:  27  
+ 41 EASIG     p:  27  ,          ,  p:   1  
+ 42 EASIG     p:   1  ,          ,  p:  28  
+ 43 GOTOS             ,          ,  e:   6  
+ 44 EASIG     p:   0  ,          ,  p:  29  
+ 45 EWRITE            ,          ,  p:  29  

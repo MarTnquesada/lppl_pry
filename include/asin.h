@@ -102,8 +102,9 @@ union YYSTYPE
     int tipo;
     LCSTRUCT lcstr;
     CTESTRUCT ctestr;
+    JMPSTRUCT jmpstr;
 
-#line 107 "asin.h" /* yacc.c:1909  */
+#line 108 "asin.h" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;
