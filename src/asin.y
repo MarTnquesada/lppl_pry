@@ -295,12 +295,19 @@ expresion               : expresionLogica
                                         int aux = creaVarTemp();
                                         $$.pos = creaVarTemp();
                                         if($5 != EASIG){
-                                            emite($5, crArgPos(sim.desp), crArgPos($3.pos),  crArgPos(aux));
+                                            // Hago la operación correspondiente y guardo en "aux"
+                                            // está mal (hay que usar EAV)
+                                            // emite($5, crArgPos(sim.desp), crArgPos($3.pos),  crArgPos(aux));
+                                            // Asigno al vector el valor obtenido "aux"
                                             emite(EVA, crArgPos(sim.desp), crArgPos($3.pos), crArgPos(aux));
+                                            // Propago
                                             emite(EASIG, crArgPos(aux), crArgNul(), crArgPos($$.pos));
+                                            // EAV, operadorAsignacion, EVA al $$.pos
                                         }
                                         else {
+                                            // Asigno al vector el valor
                                             emite(EVA, crArgPos(sim.desp), crArgPos($3.pos), crArgPos($6.pos));
+                                            // Propago
                                             emite(EASIG, crArgPos($6.pos), crArgNul(), crArgPos($$.pos));
                                         }    
                                     }
@@ -569,8 +576,6 @@ expresionSufija         : APAR_ expresion CPAR_
                                     }
                                     else {
                                         $$.tipo = arr.telem;
-                                        // Se comprueba en tiempo de ejecución, por lo que LO COMPROBAMOS LUEGO XD
-                                        int aux = creaVarTemp();
                                         // Nota: no multiplicamos la expresión por TALLA_TIPO_SIMPLE porque es 1
                                         // Si expresion < 0 entonces peto
                                         emite(EMEN, crArgPos($3.pos), crArgEnt(0), crArgEtq(si + 2));
@@ -578,10 +583,10 @@ expresionSufija         : APAR_ expresion CPAR_
                                         emite(EMEN, crArgPos($3.pos), crArgEnt(arr.nelem), crArgEtq(si + 2));
                                         // He petado. Acabo el programa.
                                         emite(FIN, crArgNul(), crArgNul(), crArgNul());
+
                                         // No he petado en esta instrucción. Prosigo normalmente.
-                                        emite(ESUM, crArgPos(sim.desp), crArgPos($3.pos), crArgPos(aux));
                                         $$.pos = creaVarTemp();
-                                        emite(EASIG, crArgPos(aux), crArgNul(), crArgPos($$.pos));
+                                        emite(EAV, crArgPos(sim.desp), crArgPos($3.pos), crArgPos($$.pos));
                                     }
                                 }
                             }

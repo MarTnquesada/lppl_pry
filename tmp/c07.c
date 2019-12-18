@@ -22,6 +22,7 @@
     // Eliminacion de los multiplos de "n"
     i = 2;
     while ((i * n) <= max) { a[i*n] = false; i++; }
+    
     // Busqueda del siguiente primo
     i = n + 1;
     while (! a[i] && (i <= max)) {i++;}
