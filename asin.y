@@ -50,53 +50,46 @@ sentencia               : declaracion
                         ;
 declaracion             : tipoSimple ID_ SEMICOL_
                             {
-                                SIMB sim = obtTdS($2);
-                                if (sim.tipo != T_ERROR) {
+                                if (!insTdS($2, $1, dvar, -1)) {
                                     yyerror("Error en la declaracion de la variable: variable ya declarada.");
                                 }
                                 else {
-                                    insTdS($2, $1, dvar, -1);
                                     dvar += TALLA_TIPO_SIMPLE;
                                 }
                             }
                         | tipoSimple ID_ ASIG_ constante SEMICOL_
                             {
-                                SIMB sim = obtTdS($2);
-                                if (sim.tipo != T_ERROR) {
-                                    yyerror("Error en la declaracion de la variable: variable ya declarada.");
-                                }
-                                else if ($1 != $4.tipo) {
+                                if ($1 != $4.tipo) {
                                     yyerror("Error en la declaracion de la variable: error de incompatibilidad de tipos.");
                                 }
+                                else if (!insTdS($2, $1, dvar, -1)) {
+                                    yyerror("Error en la declaracion de la variable: variable ya declarada.");
+                                }
                                 else {
-                                    insTdS($2, $1, dvar, -1);
                                     emite(EASIG, crArgEnt($4.pos), crArgNul(), crArgPos(dvar));
                                     dvar += TALLA_TIPO_SIMPLE;
                                 }
                             }
                         | tipoSimple ID_ ACOR_ CTE_ CCOR_ SEMICOL_
                             {
-                                SIMB sim = obtTdS($2);
-                                if (sim.tipo != T_ERROR) {
-                                    yyerror("Error en la declaracion del vector: vector ya declarado.");
-                                }
-                                else if ($4 <= 0) {
+                                if ($4 <= 0) {
                                     yyerror("Error en la declaracion del vector: talla inapropiada.");
                                 }
+                                int arrayRef = insTdA($1, $4);
+                                if (!insTdS($2, T_ARRAY, dvar, arrayRef)) {
+                                    yyerror("Error en la declaracion del vector: vector ya declarado.");
+                                }
                                 else {
-                                    int arrayRef = insTdA($1, $4);
-                                    insTdS($2, T_ARRAY, dvar, arrayRef);
                                     dvar += TALLA_TIPO_SIMPLE * $4;
                                 }
                             }
                         | STRUCT_ ALLAV_ listaCampos CLLAV_ ID_ SEMICOL_
                             {
-                                SIMB sim = obtTdS($5);
-                                if (sim.tipo != T_ERROR) {
+                                
+                                if (!insTdS($5, T_RECORD, dvar, $3.regRef)) {
                                     yyerror("Error en la declaracion de la estructura: estructura ya declarada.");
                                 }
                                 else {
-                                    insTdS($5, T_RECORD, dvar, $3.regRef);
                                     dvar += $3.talla;
                                 }
                             }
@@ -118,16 +111,13 @@ listaCampos             : tipoSimple ID_ SEMICOL_
                             }
                         | listaCampos tipoSimple ID_ SEMICOL_
                             {
-                                CAMP sim = obtTdR($1.regRef, $3);
-                                if (sim.tipo != T_ERROR) {
+                                if (insTdR($1.regRef, $3, $2, $1.talla) == -1) {
                                     yyerror("Error en la declaracion de la estructura: campo duplicado");
                                 }
-                                /* No se tiene que comprobar si ya existe en la tabla
-                                de simbolos, porque es un campo del registro y no una
-                                variable del programa */
-                                insTdR($1.regRef, $3, $2, $1.talla);
-                                $$.talla += TALLA_TIPO_SIMPLE;
-                                $$.regRef = $1.regRef;
+                                else {
+                                    $$.talla += TALLA_TIPO_SIMPLE;
+                                    $$.regRef = $1.regRef;
+                                }
                             }
                         ;
 instruccion             : ALLAV_ CLLAV_
