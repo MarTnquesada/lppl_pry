@@ -158,7 +158,6 @@ instruccionEntradaSalida : READ_ APAR_ ID_ CPAR_ SEMICOL_
                         ;
 instruccionSeleccion    : IF_ APAR_ expresion CPAR_
                             {
-                                // TODO: meter código a mitad de regla xd
                                 // Si hay $$ a mitad de regla no va a la parte izquierda de la regla!!
                                 // Cómo ir a la parte izquierda?
                                 // Solución: bison crea un no-terminal @1, @2, ..., por lo que OJO! Los $<número> se modifican
@@ -194,7 +193,6 @@ instruccionIteracion    : WHILE_
                             }
                         APAR_ expresion CPAR_
                             {
-                                // TODO: meter código a mitad de regla xd
                                 if ($4.tipo == T_ERROR) {
                                     // Ninguna salida por pantalla, ya la hemos hecho donde toca
                                 }
